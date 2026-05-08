@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**/.env.example)",
+      "Edit(**/.env.example)",
+      "Write(**/.env.example)"
+    ],
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Bash(rm -rf*)",
+      "Bash(git push --force*)",
+      "Bash(git reset --hard*)",
+      "Bash(chmod 777*)",
+      "Bash(sudo rm*)",
+      "Bash(curl * | bash*)",
+      "Bash(wget * | bash*)"
+    ]
+  }
+}
