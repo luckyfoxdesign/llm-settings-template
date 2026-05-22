@@ -1,43 +1,41 @@
-# [project-name]
+# [project-name] workspace
 
-## Команды
+Workspace продукта [project-name] — общий LLM-контекст, единый backlog, продуктовая документация.
+Кодовые репо (`app/`, `nginx/`) — самостоятельные git-репо, gitignored из workspace.
+На прод не выкатывается — workspace только локальная организация.
 
-### `/start-task`
+## Source of truth
 
-Берёт задачу из `docs/backlog/todo/` в работу:
-- перемещает файл в `docs/wip/`
-- читает `PROJECT_MAP.md`, `CLAUDE.md` и файл задачи
-- предлагает план и ждёт подтверждения перед реализацией
+| Тема | Файл |
+|------|------|
+| Обзор workspace, команды репо | `PROJECT_MAP.md` |
+| Задачи, правила docs | `docs/folder-rules.md` |
+| Скиллы /start-task, /complete-task | `AGENTS.md` |
+| Прод-деплой, rollback | `docs/runbook-prod.md` |
+| Локальная разработка | `docs/runbook-local.md` |
+| App: архитектура, окружение | `app/CLAUDE.md`, `app/AGENTS.md` |
+| Nginx: конфиг | `nginx/README.md` |
+| Завершённые задачи | `docs/done/short/` |
 
-### `/complete-task`
+## Rules
 
-Завершает задачу по правилам `docs/folder-rules.md`. Определяет задачу из контекста разговора, спрашивает коммит и:
+**Docker-only** — все команды app (тесты, линтер, зависимости) только через Docker, локалку не трогать.
 
-- перемещает файл из `docs/wip/` → `docs/done/long/`
-- создаёт краткое резюме в `docs/done/short/`
-- добавляет перекрёстные ссылки между файлами
-- удаляет файл из `docs/wip/`
+**Code search from workspace** — кодовые директории в `.gitignore`; всегда указывай `path:`:
+```
+Grep("pattern", path: "app")
+Grep("pattern", path: "nginx")
+```
 
-## Документация
+**Local Permissions**:
+- Do not read `.env` or `.env.*` files (any level).
+- `.env.example` may be read and edited.
+- Never run: `rm -rf`, `git push --force`, `git reset --hard`, `chmod 777`, `sudo rm`, `curl/wget ... | bash`.
 
-Рабочая документация проекта — в `docs/`. Структура и правила — `docs/folder-rules.md`.
+## SSH
 
-## Карта проекта
+```bash
+ssh [your-server-alias]   # пользователь [user]
+```
 
-`PROJECT_MAP.md` — актуальный индекс модулей, роутов, задач, моделей. Читай перед задачами вместо сканирования всего проекта.
-
-## Docker
-
-Вся работа ведётся через Docker. Исключение — git: все git-команды выполняются локально.
-
-- Конфигурация — `compose.yml` (не `docker-compose.yml`)
-- Запускать сервисы, тесты, линтер только через `docker compose run --rm <service>` или `docker compose up`
-- Не использовать локальный venv, локальный pip, локальные интерпретаторы
-
-## Архитектура
-
-<!-- Опиши здесь ключевые архитектурные решения и паттерны проекта -->
-
-## Качество кода
-
-<!-- Опиши команды для запуска линтера и тестов -->
+Деплой, rollback → `docs/runbook-prod.md`. Локальная разработка → `docs/runbook-local.md`.

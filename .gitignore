@@ -1,5 +1,22 @@
+# Code repos (отдельные git-репозитории внутри workspace)
+/app/
+/nginx/
+
+# Локальная активная работа
+docs/wip/
+
+# macOS / IDE
+.DS_Store
+.zed/
+.vscode/
+
+# Python (для workspace-скриптов)
+__pycache__/
+*.pyc
+.venv/
+
+# Логи / env
+*.log
 .env
 .env.*
 !.env.example
-
-docs/

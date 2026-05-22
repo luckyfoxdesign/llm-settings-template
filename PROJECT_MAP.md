@@ -1,34 +1,48 @@
-# Project Map
+# Workspace Project Map
+<!-- Обновляй вручную или через скрипт при изменении структуры. -->
+<!-- Читай перед задачами вместо сканирования всего workspace. -->
 
-<!-- Этот файл генерируется автоматически или обновляется вручную. -->
-<!-- Читай его перед задачами вместо сканирования всего проекта. -->
+Aggregating map of the [project-name] workspace. Repo-local карты — источник правды для деталей конкретного репо; этот файл собирает обзор верхнего уровня.
 
-## Модули
+## Workspace layout
 
-<!-- Список модулей/пакетов проекта -->
+```
+dev/[project-name]/
+├── AGENTS.md, CLAUDE.md, PROJECT_MAP.md
+├── docs/                     — продуктовая документация (под git, кроме wip/)
+├── .claude/commands/         — workspace-уровневые скиллы
+│
+├── app/                      — отдельный git repo (переименуй под свой стек)
+└── nginx/                    — отдельный git repo
+```
 
-## Роуты / Endpoints
+## Repos
 
-<!-- API endpoints или основные точки входа -->
+| Репо | Карта | Status |
+|------|-------|--------|
+| app | `app/PROJECT_MAP.md` | — |
+| nginx | `nginx/README.md` | — |
 
-## Модели / Схемы
+## app (`app/`)
 
-<!-- Основные модели данных -->
+См. `app/PROJECT_MAP.md` для актуального списка модулей и команд.
 
-## Docker / Сервисы
+Ключевые команды:
+```bash
+cd app
+docker compose up              # запуск
+docker compose run --rm test   # тесты
+docker compose run --rm lint   # линтер
+```
 
-<!-- Сервисы в compose.yml и их назначение -->
+## nginx (`nginx/`)
 
-## Если нужно сделать X
+Prod nginx reverse proxy + SSL. См. `nginx/README.md`.
 
-| Задача | Файл / модуль |
-|--------|---------------|
-| ...    | ...           |
+## Active tasks (`docs/wip/`)
 
-## Активные задачи
+<!-- Ссылки на docs/wip/ — обновляй вручную или скриптом -->
 
-<!-- Ссылки на docs/wip/ -->
+## Backlog (`docs/backlog/todo/`)
 
-## Недавно завершено
-
-<!-- Ссылки на docs/done/short/ -->
+<!-- Ссылки на docs/backlog/todo/ — обновляй вручную или скриптом -->
