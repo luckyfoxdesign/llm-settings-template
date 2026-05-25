@@ -215,6 +215,7 @@ created: 2026-05-16
 | `task`          | Задача из `backlog/` или `wip/`                   |
 | `bug`           | Описание бага (`backlog/bugs/`)                   |
 | `idea`          | Сырая идея в `ideas/`                             |
+| `vision`        | Продуктовое видение (`product/vision/`)           |
 | `architecture`  | Стабильное архитектурное решение                  |
 | `done_long`     | Полный итог завершённой задачи (`done/long/`)     |
 | `done_short`    | Краткое резюме завершённой задачи (`done/short/`) |

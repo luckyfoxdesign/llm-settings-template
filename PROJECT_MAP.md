@@ -11,10 +11,21 @@ dev/[project-name]/
 ├── AGENTS.md, CLAUDE.md, PROJECT_MAP.md
 ├── docs/                     — продуктовая документация (под git, кроме wip/)
 ├── .claude/commands/         — workspace-уровневые скиллы
+├── _templates/sub-repo/      — шаблон для новых суб-репо (см. ниже)
 │
 ├── app/                      — отдельный git repo (переименуй под свой стек)
 └── nginx/                    — отдельный git repo
 ```
+
+## Добавление нового суб-репо
+
+При создании нового суб-репо (`git init <repo-name>`) скопируй в него шаблон:
+
+```bash
+cp -r _templates/sub-repo/. <repo-name>/
+```
+
+Затем замени плейсхолдеры `[project-name]` и `[repo-name]` в `CLAUDE.md` и `AGENTS.md`, и заполни секции архитектуры/тестов/деплоя.
 
 ## Repos
 
