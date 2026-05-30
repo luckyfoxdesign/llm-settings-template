@@ -14,6 +14,7 @@ dev/[project-name]/
 ├── _templates/sub-repo/      — шаблон для новых суб-репо (см. ниже)
 │
 ├── app/                      — отдельный git repo (переименуй под свой стек)
+├── landing/                  — frontend/landing repo (опционально)
 └── nginx/                    — отдельный git repo
 ```
 
@@ -32,6 +33,7 @@ cp -r _templates/sub-repo/. <repo-name>/
 | Репо | Карта | Status |
 |------|-------|--------|
 | app | `app/PROJECT_MAP.md` | — |
+| landing | `landing/package.json` | — |
 | nginx | `nginx/README.md` | — |
 
 ## app (`app/`)
@@ -44,6 +46,17 @@ cd app
 docker compose up              # запуск
 docker compose run --rm test   # тесты
 docker compose run --rm lint   # линтер
+```
+
+## landing (`landing/`)
+
+Frontend/landing repo. См. `landing/package.json` и repo-local README/CLAUDE.md, если существуют.
+
+Ключевые команды:
+```bash
+cd landing
+docker compose up              # запуск
+docker compose run --rm build  # сборка
 ```
 
 ## nginx (`nginx/`)

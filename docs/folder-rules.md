@@ -1,8 +1,8 @@
 # Правила ведения docs/
 
-`docs/` — продуктовая документация workspace для всех частей продукта (app, nginx и будущих). Под git workspace-репозитория, **кроме `wip/`** — `wip/` локальный, в `.gitignore`.
+`docs/` — продуктовая документация workspace для всех частей продукта (app, landing, nginx и будущих). Под git workspace-репозитория, **кроме `wip/`** — `wip/` локальный, в `.gitignore`.
 
-Кодовые репозитории внутри workspace (`app/`, `nginx/`) **не ведут собственный backlog**. Все продуктовые задачи живут только здесь.
+Кодовые репозитории внутри workspace (`app/`, `landing/`, `nginx/`) **не ведут собственный backlog**. Все продуктовые задачи живут только здесь.
 
 ---
 
@@ -34,6 +34,7 @@ docs/
 | Проект    | Префикс в имени             | Поле `project`         |
 |-----------|-----------------------------|------------------------|
 | app       | `dd-mm-yy-app-…`            | `project: app`         |
+| landing   | `dd-mm-yy-landing-…`        | `project: landing`     |
 | nginx     | `dd-mm-yy-nginx-…`          | `project: nginx`       |
 | workspace | `dd-mm-yy-workspace-…`      | `project: workspace`   |
 | cross-репо | `dd-mm-yy-cross-<a>-<b>-…` | `project: cross` + `projects: [a, b]` |
@@ -41,6 +42,7 @@ docs/
 Примеры:
 
 - `16-05-26-app-auth-refactor.md` + `project: app`
+- `16-05-26-landing-mvp.md` + `project: landing`
 - `16-05-26-nginx-ssl-renewal.md` + `project: nginx`
 - `16-05-26-workspace-folder-rules.md` + `project: workspace`
 - `16-05-26-cross-app-nginx-domain-routing.md` + `project: cross`, `projects: [app, nginx]`
@@ -222,12 +224,12 @@ created: 2026-05-16
 
 Допустимые значения `status`: `todo`, `wip`, `done`, `draft`, `blocked`.
 
-Допустимые значения `project`: `app`, `nginx`, `workspace`, `cross`.
+Допустимые значения `project`: `app`, `landing`, `nginx`, `workspace`, `cross`.
 
 Необязательные поля:
 
 - `area` — список тематических областей.
-- `related_code` — пути к файлам кода (с префиксом репо: `app/src/...`).
+- `related_code` — пути к файлам кода (с префиксом репо: `app/src/...`, `landing/src/...`).
 - `related_docs` — пути к связанным docs-файлам.
 
 **Правила:**

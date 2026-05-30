@@ -1,12 +1,12 @@
 # [project-name] workspace — Codex Instructions
 
-`dev/[project-name]/` — workspace с кодовыми репо (`app/`, `nginx/`) как самостоятельными git-репо. Workspace — отдельный git-репо для LLM-контекста, задач и документации.
+`dev/[project-name]/` — workspace с кодовыми репо (`app/`, `landing/`, `nginx/`) как самостоятельными git-репо. Workspace — отдельный git-репо для LLM-контекста, задач и документации.
 
-Поиск по коду из workspace: всегда указывай `path:` (`Grep("pattern", path: "app")`), иначе `.gitignore` исключит код.
+Поиск по коду из workspace: всегда указывай `path:` (`Grep("pattern", path: "app")`, `Grep("pattern", path: "landing")`), иначе `.gitignore` исключит код.
 
 ## Repo paths в задачах
 
-Всегда указывай префикс репо: `app/src/...`, `nginx/conf/...`.
+Всегда указывай префикс репо: `app/src/...`, `landing/src/...`, `nginx/conf/...`.
 
 ## Local Permissions Policy
 
@@ -28,8 +28,8 @@
    - `PROJECT_MAP.md` workspace
    - `CLAUDE.md` workspace
    - Файл задачи из `docs/wip/<filename>`
-   - Для `project: app|nginx` — `<repo>/PROJECT_MAP.md` и `<repo>/CLAUDE.md` соответствующего репо
-   - Для `project: cross` — repo-local карты всех репо из поля `projects`
+   - Для `project: app|landing|nginx` — `<repo>/PROJECT_MAP.md` и `<repo>/CLAUDE.md` соответствующего репо, **если существуют** (репо подключаются постепенно; если файла нет — пропусти)
+   - Для `project: cross` — repo-local карты всех репо из поля `projects` (те, что уже существуют)
 6. Покажи короткий план — 3–7 пунктов — и дождись подтверждения пользователя перед реализацией.
 7. Реализуй согласно плану и правилам repo-local AGENTS.md.
 8. По завершении подскажи: `Готово. Можно закрыть задачу командой /complete-task.`
@@ -44,7 +44,7 @@
 2. **Имя сохраняется полностью** (с датой и project-префиксом). Done-файлы: `docs/done/long/<filename>` и `docs/done/short/<filename>`.
 3. Прочитай файл задачи из `docs/wip/`.
 4. Определи список репо из frontmatter:
-   - `project: app|nginx` → один репо.
+   - `project: app|landing|nginx` → один репо.
    - `project: workspace` → коммитим только в workspace (docs-only задача).
    - `project: cross` → берём список из `projects`.
 5. Для каждого затронутого репо:
