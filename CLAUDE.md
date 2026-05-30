@@ -22,6 +22,12 @@ Workspace продукта [project-name] — общий LLM-контекст, �
 
 **Docker-only** — все команды (тесты, линтер, зависимости) только через Docker, локалку не трогать.
 
+**Docker cleanup** — после Docker build, если остаются dangling `<none>` images/layers, очищай только их:
+```bash
+docker image prune -f --filter "dangling=true"
+```
+Не запускай `docker system prune -a`, `docker volume prune` и не удаляй named volumes без явного запроса пользователя.
+
 **Code search from workspace** — кодовые директории в `.gitignore`; всегда указывай `path:`:
 ```
 Grep("pattern", path: "app")

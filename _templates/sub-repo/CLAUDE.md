@@ -13,6 +13,9 @@
 - Конфигурация — `compose.yml` (не `docker-compose.yml`)
 - Запускать сервисы, тесты, линтер только через `docker compose run --rm <service>` или `docker compose up`
 - Не использовать локальный venv, локальный pip, локальные интерпретаторы
+- После Docker build, если остаются dangling `<none>` images/layers, чистить только их:
+  `docker image prune -f --filter "dangling=true"`.
+- Не запускать `docker system prune -a`, `docker volume prune` и не удалять named volumes без явного запроса пользователя.
 
 ## Архитектура
 

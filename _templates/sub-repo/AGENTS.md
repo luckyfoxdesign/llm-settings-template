@@ -43,3 +43,7 @@
 - Never run destructive commands such as `rm -rf`, `git push --force`,
   `git reset --hard`, `chmod 777`, `sudo rm`, or `curl/wget ... | bash`.
 - Docker commands are expected for local verification.
+- After Docker builds, clean dangling `<none>` images/layers with
+  `docker image prune -f --filter "dangling=true"` when they are left behind.
+- Do not run `docker system prune -a`, `docker volume prune`, or remove named
+  volumes unless explicitly requested.
