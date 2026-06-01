@@ -1,8 +1,7 @@
-Возьми задачу из `docs/backlog/todo/` в работу и начни её выполнять.
+Start a task from `docs/backlog/todo/` and begin work.
 
-Полный алгоритм — в workspace `AGENTS.md`, раздел `/start-task Equivalent` (`AGENTS.md#start-task-equivalent`).
-Прочитай его и следуй точно.
+Read and follow the full algorithm in workspace `AGENTS.md`, section `/start-task` Equivalent (`AGENTS.md#start-task-equivalent`).
 
-Если передан аргумент — найди файл по частичному совпадению. Если нет — покажи список и спроси.
+If an argument is provided, find the task by partial filename match. If not, list tasks and ask which one to start.
 
 ARGUMENTS: {{args}}

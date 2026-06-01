@@ -9,35 +9,36 @@ related_code:
   - app/src/...
 ---
 
-# Пример задачи (скопируй этот файл, переименуй и заполни)
+# Example Task
 
-<!-- TEMPLATE-EXAMPLE: это образец формата задачи, не реальная задача.
-     Имя файла: dd-mm-yy-<project>-<slug>.md (см. docs/folder-rules.md).
-     Frontmatter выше — обязателен. project: app|nginx|workspace|cross.
-     Для cross добавь `projects: [a, b]`. Удали этот файл, когда формат понятен. -->
+<!-- TEMPLATE-EXAMPLE: sample task format, not a real task.
+     Filename: dd-mm-yy-<project>-<slug>.md.
+     Frontmatter is required. project: app|landing|nginx|workspace|cross.
+     For cross-repo tasks, add `projects: [a, b]`.
+     Delete this file once the format is clear. -->
 
-**Status:** todo — ещё не начато
+**Status:** todo, not started
 **Last checked:** 0000-00-00
 
-## Цель
+## Goal
 
-Что должно получиться и зачем. Одно-два предложения.
+Expected outcome and why it matters. One or two sentences.
 
-## Контекст
+## Context
 
-Откуда задача, что уже известно, какие ограничения.
+Where the task came from, what is known, and relevant constraints.
 
-## Шаги реализации
+## Implementation Steps
 
-1. Шаг первый.
-2. Шаг второй.
+1. First step.
+2. Second step.
 
-## Definition of Done
+## Definition Of Done
 
-- [ ] Критерий 1
-- [ ] Критерий 2
+- [ ] Criterion 1
+- [ ] Criterion 2
 
-## Связанное
+## Related
 
-- Архитектура: `docs/product/architecture/<slug>.md`
-- Связанные задачи: ...
+- Architecture: `docs/product/architecture/<slug>.md`
+- Related tasks: ...

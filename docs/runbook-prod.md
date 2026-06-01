@@ -1,59 +1,62 @@
-# Production runbook
+# Production Runbook
 
-<!-- TEMPLATE: заполни [плейсхолдеры] под свой проект и удали этот комментарий.
-     Это операционная шпаргалка на случай деплоя/инцидента — пиши команды так,
-     чтобы их можно было скопировать и выполнить без додумывания. -->
+<!-- TEMPLATE: fill placeholders for your project and delete this comment.
+     This is an operational deploy/incident reference. Commands should be copy-pasteable. -->
 
-Operational reference для деплоя [project-name]. Все команды выполняются на хосте `[your-server-alias]` (пользователь `[user]`). Код на VPS лежит по пути `[~/project-path]`.
+Operational reference for deploying `[project-name]`.
 
-## Переменные окружения
+All commands run on `[your-server-alias]` as `[user]`. VPS project path: `[~/project-path]`.
 
-`.env` лежит на сервере в `[~/project-path]/.env` и не коммитится. Минимально необходимый набор:
+## Environment
 
-```
-# [сгруппируй по сервисам: БД, внешние API, секреты приложения]
+`.env` lives on the server at `[~/project-path]/.env` and is not committed. Minimum required variables:
+
+```text
+# Group by service: database, external APIs, app secrets.
 DATABASE_URL=
 # SECRET_KEY=<strong-random>
 # THIRD_PARTY_API_KEY=
 LOG_LEVEL=info
 ```
 
-<!-- Отметь переменные, без которых compose.prod.yml не стартует (если используешь `:?`). -->
+<!-- Mark variables required by compose.prod.yml, especially those using `:?`. -->
 
 ## SSH
 
 ```bash
-ssh [your-server-alias]   # пользователь [user]
+ssh [your-server-alias]
 ```
 
-## Деплой
+## Deploy
 
 ```bash
 ssh [your-server-alias] "cd [~/project-path] && bash scripts/deploy.sh"
 ```
 
-`scripts/deploy.sh` должен делать: `git pull` → `docker compose -f compose.prod.yml build` → `[миграции, если есть]` → `docker compose -f compose.prod.yml up -d`.
+`scripts/deploy.sh` should run: `git pull`, `docker compose -f compose.prod.yml build`, migrations if needed, then `docker compose -f compose.prod.yml up -d`.
 
-<!-- Опиши порядок шагов: применяются ли миграции до старта новых контейнеров и т.п. -->
+<!-- Describe ordering: whether migrations run before new containers, whether downtime is expected, etc. -->
 
 ## Rollback
 
-1. Узнать предыдущую версию: `git log --oneline -n 5`
-2. На VPS:
-   ```bash
-   ssh [your-server-alias]
-   cd [~/project-path]
-   git checkout <prev-sha>
-   docker compose -f compose.prod.yml build
-   docker compose -f compose.prod.yml up -d
-   ```
-3. <!-- Если есть БД-миграции: опиши, как откатывать несовместимую миграцию (downgrade или restore из бэкапа) ДО переключения кода. -->
+1. Find a previous version: `git log --oneline -n 5`.
+2. On the VPS:
 
-После rollback вернуть HEAD на main: `git checkout main && bash scripts/deploy.sh`.
+```bash
+ssh [your-server-alias]
+cd [~/project-path]
+git checkout <prev-sha>
+docker compose -f compose.prod.yml build
+docker compose -f compose.prod.yml up -d
+```
 
-## Бэкап / Restore
+3. If database migrations exist, document how to downgrade or restore before switching code.
 
-<!-- Если есть БД — опиши команды бэкапа и восстановления. Пример для Postgres через docker exec:
+After rollback, return HEAD to main: `git checkout main && bash scripts/deploy.sh`.
+
+## Backup / Restore
+
+<!-- If a database exists, document backup and restore commands. Example for Postgres:
 
 ssh [your-server-alias]
 cd [~/project-path]
@@ -67,17 +70,17 @@ docker compose -f compose.prod.yml exec -T postgres \
   pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists --no-owner \
   < backups/[project]-<timestamp>.dump
 
-Важно: бэкапы нужно унести с VPS (scp/rsync на другую машину или offsite-хранилище). -->
+Move backups off the VPS with scp/rsync or offsite storage. -->
 
-## Health и observability
+## Health And Observability
 
-| Сервис | Стратегия |
-|--------|-----------|
-| `[service]` | <!-- Docker healthcheck / restart policy / Sentry / логи --> |
+| Service | Strategy |
+|---|---|
+| `[service]` | <!-- Docker healthcheck / restart policy / Sentry / logs --> |
 
-## Полезные команды
+## Useful Commands
 
 ```bash
-docker compose -f compose.prod.yml ps                       # статус
-docker compose -f compose.prod.yml logs --tail 200 [service]  # логи
+docker compose -f compose.prod.yml ps
+docker compose -f compose.prod.yml logs --tail 200 [service]
 ```

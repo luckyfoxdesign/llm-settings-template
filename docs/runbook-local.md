@@ -1,26 +1,25 @@
-# Local development runbook
+# Local Development Runbook
 
-<!-- TEMPLATE: замени [app], команды и порты под свой стек. Удали этот комментарий после заполнения. -->
+<!-- TEMPLATE: replace repo names, commands, and ports for your stack. Delete this comment after setup. -->
 
-Команды для локальной разработки [project-name]. Workspace на прод не выкатывается.
+Local development commands for `[project-name]`. The workspace itself is not deployed.
 
 ## app
 
 ```bash
 cd app
-docker compose up                       # запуск сервисов
-docker compose run --rm test            # тесты
-docker compose run --rm lint            # линтер
-# [добавь команды миграций / сидов, если есть]
+docker compose up
+docker compose run --rm test
+docker compose run --rm lint
+# Add migration/seed commands if needed.
 ```
 
-<!-- Если имя проекта в compose фиксируется через `name:` — отметь это здесь,
-     чтобы volume/network не зависели от имени родительской директории. -->
+<!-- If compose uses a fixed `name:`, note it here so volumes/networks do not depend on the parent directory name. -->
 
 ## nginx
 
-Производственный nginx живёт в репо `nginx/`. Локально обычно не запускается — поднимается только на проде.
+Production nginx lives in the `nginx/` repo. It usually runs only in production, not locally.
 
-Детали — `nginx/README.md`.
+Details: `nginx/README.md`.
 
-<!-- Добавь секции для других репо (landing, admin, …) по мере появления. -->
+<!-- Add sections for other repos, such as landing/admin, as they appear. -->

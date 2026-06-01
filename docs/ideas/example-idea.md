@@ -4,19 +4,19 @@ status: draft
 created: 0000-00-00
 ---
 
-# Пример идеи (скопируй, переименуй, заполни)
+# Example Idea
 
-<!-- TEMPLATE-EXAMPLE: образец формата идеи, не реальная идея.
-     Имя файла — свободный <slug>.md без даты (см. docs/folder-rules.md).
-     Идеи периодически просматриваются: либо превращаются в задачу
-     в backlog/todo/, либо удаляются. В done/ напрямую не переходят.
-     Удали этот файл, когда формат понятен. -->
+<!-- TEMPLATE-EXAMPLE: sample idea format, not a real idea.
+     Filename is free-form: <slug>.md, no date.
+     Ideas are reviewed periodically: convert to backlog/todo or delete.
+     Ideas do not move directly to done/.
+     Delete this file once the format is clear. -->
 
-## Суть
+## Summary
 
-Сырая мысль одним абзацем. Что предлагается и почему может быть полезно.
+Raw idea in one paragraph: what is proposed and why it may be useful.
 
-## Открытые вопросы
+## Open Questions
 
-- Что неясно?
-- Что нужно проверить, прежде чем брать в работу?
+- What is unclear?
+- What must be checked before this becomes a task?

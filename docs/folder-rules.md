@@ -1,175 +1,146 @@
-# Правила ведения docs/
+# Docs Rules
 
-`docs/` — продуктовая документация workspace для всех частей продукта (app, landing, nginx и будущих). Под git workspace-репозитория, **кроме `wip/`** — `wip/` локальный, в `.gitignore`.
+`docs/` is workspace-level product documentation for all repos. Code repos (`app/`, `landing/`, `nginx`) do not keep their own product backlog.
 
-Кодовые репозитории внутри workspace (`app/`, `landing/`, `nginx/`) **не ведут собственный backlog**. Все продуктовые задачи живут только здесь.
+`docs/wip/` is local and gitignored.
 
----
+## Layout
 
-## Структура папок
-
-```
+```text
 docs/
-├── wip/               — задачи в активной работе прямо сейчас (gitignored)
-├── backlog/           — общий набор задач
-│   ├── todo/          — задачи, которые точно стоит брать
-│   └── bugs/          — описания багов до начала работы над ними
-├── ideas/             — сырые идеи, заготовки, неотсортированное
+├── wip/                  # active local tasks
+├── backlog/
+│   ├── todo/             # ready tasks
+│   └── bugs/             # bug reports before implementation
+├── ideas/                # raw ideas
 ├── done/
-│   ├── long/          — полный план задачи после завершения
-│   └── short/         — краткое резюме что сделано и как проверено
+│   ├── long/             # full completed task records
+│   └── short/            # concise completion summaries
 ├── product/
-│   ├── architecture/  — стабильные архитектурные описания и решения
-│   └── vision/        — продуктовая документация
-│       └── vision.md  — продуктовое видение
-└── folder-rules.md    — этот файл
+│   ├── architecture/     # stable architecture decisions
+│   └── vision/           # product vision
+└── folder-rules.md
 ```
 
----
+## Project Maps
 
-## Префикс проекта в именах задач
+Maps have two levels.
 
-Каждая задача в `backlog/todo/`, `backlog/bugs/` и `wip/` имеет префикс проекта в имени файла и поле `project` во frontmatter.
+Workspace `PROJECT_MAP.md` is only an aggregator:
 
-| Проект    | Префикс в имени             | Поле `project`         |
-|-----------|-----------------------------|------------------------|
-| app       | `dd-mm-yy-app-…`            | `project: app`         |
-| landing   | `dd-mm-yy-landing-…`        | `project: landing`     |
-| nginx     | `dd-mm-yy-nginx-…`          | `project: nginx`       |
-| workspace | `dd-mm-yy-workspace-…`      | `project: workspace`   |
-| cross-репо | `dd-mm-yy-cross-<a>-<b>-…` | `project: cross` + `projects: [a, b]` |
+- lists repos;
+- links to `<repo>/PROJECT_MAP.md`;
+- keeps shared commands and top-level structure;
+- does not duplicate repo modules, routes, models, services, or internals.
 
-Примеры:
+Every code repo must include:
 
-- `16-05-26-app-auth-refactor.md` + `project: app`
-- `16-05-26-landing-mvp.md` + `project: landing`
-- `16-05-26-nginx-ssl-renewal.md` + `project: nginx`
-- `16-05-26-workspace-folder-rules.md` + `project: workspace`
-- `16-05-26-cross-app-nginx-domain-routing.md` + `project: cross`, `projects: [app, nginx]`
+```text
+<repo>/
+├── AGENTS.md
+├── CLAUDE.md
+├── PROJECT_MAP.md
+├── scripts/
+│   └── update-project-map.sh
+└── ...
+```
 
-`workspace` — задачи, которые меняют сам workspace: правила, скрипты, общую документацию.
+Repo-local `PROJECT_MAP.md` is the source of truth for repo structure: entrypoints, key directories, configs, Docker services, package scripts, API/routes/jobs/models when relevant.
 
----
-
-## Жизненный цикл задачи
-
-### 1. Появление — `backlog/`
-
-- Понятная и приоритетная — `backlog/todo/`.
-- Баг — `backlog/bugs/`.
-- Сырая идея, нет ясности — `ideas/`.
-
-Имя файла: `dd-mm-yy-<project>-<slug>.md`. Дата — дата создания.
-
-Заголовок и поля для задач:
+Recommended repo map shape:
 
 ```markdown
-# Название задачи
+# <repo> Project Map
 
-**Status:** <описание текущего состояния>
-**Last checked:** YYYY-MM-DD
+<!-- generated:start -->
+## Generated Structure
+## Commands
+## Entrypoints
+## Config Files
+## Notable Directories
+<!-- generated:end -->
+
+<!-- manual:start -->
+## Architecture Notes
+## Conventions
+## Known Sharp Edges
+<!-- manual:end -->
 ```
 
-Файл содержит: цель, контекст, шаги реализации, ссылки на архитектуру или связанные задачи.
+Rules:
 
-### 2. Взятие в работу — `wip/`
+- Scripts may rewrite only `generated` blocks.
+- `manual` blocks are edited intentionally by a human or agent.
+- Long architecture decisions live in `docs/product/architecture/`.
+- New repos are created from `_templates/sub-repo/.`.
+- Repo structure changes must update the repo-local map.
+- Workspace map composition is done by `scripts/update-project-map.sh`.
+- Repo-local map generation is done by `<repo>/scripts/update-project-map.sh`.
+- If a map script is not implemented yet, add a stub with explicit TODOs.
 
-Когда задача начата, файл перемещается из `backlog/todo/` (или `backlog/bugs/`) в `wip/`. Имя сохраняется.
+## Task Names
 
-`wip/` локальный (gitignored). В нём одновременно должно быть минимальное количество файлов — только то, над чем идёт работа прямо сейчас.
+Task filename format: `dd-mm-yy-<project>-<slug>.md`.
 
-### 3. Подзадачи
+| Project | Filename prefix | Frontmatter |
+|---|---|---|
+| app | `dd-mm-yy-app-...` | `project: app` |
+| landing | `dd-mm-yy-landing-...` | `project: landing` |
+| nginx | `dd-mm-yy-nginx-...` | `project: nginx` |
+| workspace | `dd-mm-yy-workspace-...` | `project: workspace` |
+| cross-repo | `dd-mm-yy-cross-<a>-<b>-...` | `project: cross`, `projects: [...]` |
 
-Если задача разбивается на части, создаются файлы с суффиксом `-a`, `-b` и т.д. в slug: `16-05-26-app-auth-refactor-a-models.md`. Родительский файл ссылается на подзадачи и зачёркивает выполненные.
+`workspace` tasks change only workspace rules, scripts, or docs.
 
-### 4. Завершение — перемещение в `done/`
+## Task Lifecycle
 
-После реализации и проверки:
+1. Create ready tasks in `docs/backlog/todo/`.
+2. Create bug reports in `docs/backlog/bugs/`.
+3. Keep raw ideas in `docs/ideas/`.
+4. When work starts, move the file to `docs/wip/` and preserve the filename.
+5. Keep `docs/wip/` small: only active work.
+6. If a task is split, use suffixes in the slug: `...-a-models.md`, `...-b-api.md`.
+7. When complete:
+   - create `docs/done/long/<filename>`;
+   - create `docs/done/short/<filename>`;
+   - link the two files;
+   - delete the original `docs/wip/<filename>`.
 
-**Шаг 1.** Переместить файл из `wip/` в `done/long/`. **Имя сохраняется полностью** — с датой и project-префиксом.
+## Done Commit Block
 
-`docs/wip/16-05-26-app-auth-refactor.md` → `docs/done/long/16-05-26-app-auth-refactor.md`
-
-**Шаг 2.** Создать краткое резюме в `done/short/` с тем же именем файла.
-
-**Шаг 3.** Добавить между документами перекрестные ссылки.
-
-**Шаг 4.** Удалить оригинальный файл из `wip/`.
-
-### 5. Формат блока коммитов
-
-В `done/long/` и `done/short/` коммиты **всегда указываются списком**, даже если он один.
+Always use a list:
 
 ```markdown
 **Commits:**
-- app `abc1234` — "feat: описание"
-- nginx `def5678` — "feat: описание"
+- app `abc1234` — "feat: description"
+- nginx `def5678` — "fix: description"
 ```
 
-Если коммит один:
+Short summary format:
 
 ```markdown
-**Commits:**
-- app `abc1234` — "feat: описание"
-```
-
-Формат короткого резюме:
-
-```markdown
-# Название задачи
+# Task Title
 
 **Commits:**
-- app `abc1234` — "feat: описание"
+- app `abc1234` — "feat: description"
 
-## Что сделано
+## What Changed
 
-- Пункт 1
-- Пункт 2
+- Item 1
+- Item 2
 
 ---
-[Полный план](../long/16-05-26-app-auth-refactor.md)
-Closes #N  ← если задача закрывает GitHub issue
+[Full plan](../long/<filename>)
+Closes #N
 ```
 
-### 6. Баги — `backlog/bugs/`
-
-Имя файла: `dd-mm-yy-<project>-<slug>.md`. При взятии в работу — перемещаются в `wip/`. После исправления — по той же схеме в `done/long/` + `done/short/`.
-
-### 7. Идеи — `ideas/`
-
-Сырые идеи, концепции, исследовательские заметки. Имя — свободное `slug.md`. Периодически просматриваются: либо превращаются в задачу в `backlog/todo/`, либо удаляются. Не переходят в `done/` напрямую.
-
----
-
-## Именование файлов
-
-| Папка                 | Формат имени                          | Пример                                  |
-|-----------------------|---------------------------------------|-----------------------------------------|
-| `backlog/todo/`       | `dd-mm-yy-<project>-<slug>.md`        | `16-05-26-app-auth-refactor.md`         |
-| `backlog/todo/` cross | `dd-mm-yy-cross-<a>-<b>-<slug>.md`    | `16-05-26-cross-app-nginx-routing.md`   |
-| `backlog/bugs/`       | `dd-mm-yy-<project>-<slug>.md`        | `16-05-26-app-login-500-error.md`       |
-| `ideas/`              | `<slug>.md`                           | `content-moderation-llm.md`             |
-| `wip/`                | (сохраняется из backlog)              | `16-05-26-app-auth-refactor.md`         |
-| `done/long/`          | (сохраняется из wip)                  | `16-05-26-app-auth-refactor.md`         |
-| `done/short/`         | (сохраняется из wip)                  | `16-05-26-app-auth-refactor.md`         |
-| `product/architecture/` | `<slug>.md`                         | `api-auth-flow.md`                      |
-
----
-
-## Ссылки между файлами
-
-- `wip/` и `backlog/todo/` ссылаются на `product/architecture/` для контекста.
-- `done/long/` может ссылаться на исследовательские снапшоты внутри себя.
-- `done/short/` ссылается на `done/long/` того же файла.
-- Зачёркнутые подзадачи в родительском файле оставляют ссылку на `done/long/`.
-
----
+Remove `Closes #N` when there is no GitHub issue.
 
 ## Frontmatter
 
-Все новые файлы в `docs/` (кроме `folder-rules.md` и других технических справок) должны содержать YAML-frontmatter в начале документа.
+All new docs files, except technical references like `folder-rules.md`, should start with YAML frontmatter.
 
-Минимальный формат для задачи:
+Task:
 
 ```yaml
 ---
@@ -180,7 +151,7 @@ created: 2026-05-16
 ---
 ```
 
-Для cross-репо задачи:
+Cross-repo task:
 
 ```yaml
 ---
@@ -194,7 +165,7 @@ created: 2026-05-16
 ---
 ```
 
-Для идеи:
+Idea:
 
 ```yaml
 ---
@@ -204,78 +175,52 @@ created: 2026-05-16
 ---
 ```
 
-**Обязательные поля:**
+Required fields:
 
-- `type`, `status` — для всех файлов с frontmatter.
-- `project` — для `type: task` и `type: bug` в `backlog/` и `wip/`.
-- `projects` — для `project: cross` (список затрагиваемых репо).
+- `type`, `status` for every file with frontmatter;
+- `project` for `type: task` and `type: bug` in backlog or WIP;
+- `projects` when `project: cross`.
 
-Допустимые значения `type`:
+Allowed `type`: `task`, `bug`, `idea`, `vision`, `architecture`, `decision`, `done_long`, `done_short`, `research`.
 
-| Значение        | Когда использовать                                |
-|-----------------|---------------------------------------------------|
-| `task`          | Задача из `backlog/` или `wip/`                   |
-| `bug`           | Описание бага (`backlog/bugs/`)                   |
-| `idea`          | Сырая идея в `ideas/`                             |
-| `vision`        | Продуктовое видение (`product/vision/`)           |
-| `architecture`  | Стабильное архитектурное решение                  |
-| `decision`      | Зафиксированное продуктовое решение               |
-| `done_long`     | Полный итог завершённой задачи (`done/long/`)     |
-| `done_short`    | Краткое резюме завершённой задачи (`done/short/`) |
-| `research`      | Исследовательская заметка                         |
+Allowed `status`: `todo`, `wip`, `done`, `draft`, `blocked`.
 
-Допустимые значения `status`: `todo`, `wip`, `done`, `draft`, `blocked`.
+Allowed `project`: `app`, `landing`, `nginx`, `workspace`, `cross`.
 
-Допустимые значения `project`: `app`, `landing`, `nginx`, `workspace`, `cross`.
+Optional fields:
 
-Необязательные поля (добавлять когда известны):
+- `created`: `YYYY-MM-DD`
+- `area`: topic list
+- `related_code`: repo-prefixed code paths, e.g. `app/src/...`
+- `related_docs`: docs paths
+- `source.kind`: `discussion`, `issue`, `observation`
 
-- `created` — дата создания (`YYYY-MM-DD`).
-- `area` — список тематических областей.
-- `related_code` — пути к файлам кода (с префиксом репо: `app/src/...`, `landing/src/...`). **Рекомендуется заполнять** — скрипт `scripts/build-code-index.py` строит из этого поля обратный индекс «код → задачи» (`docs/code-index.md`).
-- `related_docs` — пути к связанным docs-файлам.
-- `source.kind` — откуда пришла задача (`discussion`, `issue`, `observation`).
+Rules:
 
-**Правила:**
+- Frontmatter complements folder structure; it does not replace it.
+- `priority` is not used.
+- Do not store secrets, env values, or temporary debug notes.
+- Existing archived `done/` files without frontmatter do not need forced migration.
 
-- Frontmatter дополняет структуру папок, не заменяет её.
-- Поле `priority` упразднено. Какую задачу брать следующей — определяется глазами по бэклогу.
-- Не хранить во frontmatter секреты, env-значения или временные debug-заметки.
-- Существующие архивные файлы в `done/` без frontmatter не мигрируются принудительно.
+## Hot Context Budget
 
-**Проверка:**
+| File | Lines | Bytes |
+|---|---:|---:|
+| `CLAUDE.md` | <= 60 | <= 3 KB |
+| `AGENTS.md` | <= 180 | <= 7 KB |
+| `PROJECT_MAP.md` | <= 200 | <= 7 KB |
+| `~/.claude/.../MEMORY.md` | <= 30 | — |
 
-```bash
-python3 scripts/validate-docs-frontmatter.py
-```
-
-Скрипт запускается локально на хосте. Совместим с системным Python 3.9+. Всегда завершается с кодом 0 — только информирует.
-
----
-
-## Бюджет горячего контекста
-
-Файлы, которые грузятся при каждом LLM-обращении, имеют лимиты:
-
-| Файл | Строк | Байт |
-|------|-------|------|
-| `CLAUDE.md` | ≤ 60 | ≤ 3 KB |
-| `AGENTS.md` | ≤ 180 | ≤ 7 KB |
-| `PROJECT_MAP.md` | ≤ 200 | ≤ 7 KB |
-| `~/.claude/.../MEMORY.md` | ≤ 30 | — |
-
-Проверить:
+Check manually:
 
 ```bash
 bash scripts/check-context-budget.sh
 ```
 
-Скрипт не блокирует (exit 0), только предупреждает. Запускать вручную при работе над задачами из области `llm-context`.
+The script should warn only and exit 0.
 
----
+## Do Not Store
 
-## Что не хранится в `docs/`
-
-- Секреты, `.env`-значения, токены.
-- Дублирование того, что уже зафиксировано в коде или `CLAUDE.md` соответствующего репо.
-- Временные отладочные заметки без контекста — удалять сразу.
+- Secrets, `.env` values, tokens.
+- Facts already available in code or repo-local `CLAUDE.md`.
+- Temporary debug notes without durable context.

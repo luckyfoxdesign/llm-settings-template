@@ -1,33 +1,46 @@
 # [project-name]-[repo-name]
 
-Часть workspace `dev/[project-name]/`. Продуктовая документация, backlog, общие скиллы — на уровне workspace (`../docs/`, `../AGENTS.md`, `../CLAUDE.md`, `../.claude/commands/`). Этот файл — [repo-name]-локальная справка.
+Part of workspace `dev/[project-name]`. Product docs, backlog, and shared commands live in `../docs/`, `../AGENTS.md`, `../CLAUDE.md`, and `../.claude/commands/`.
 
-## Карта проекта
+This file is repo-local context only.
 
-`PROJECT_MAP.md` — актуальный индекс модулей, роутов, задач, моделей. Читай перед задачами вместо сканирования всего проекта.
+## Project Map
+
+`PROJECT_MAP.md` indexes repo structure: entrypoints, key directories, configs, Docker services, package/build/test scripts, API/routes/jobs/models when relevant.
+
+Read it before scanning the repo.
+
+Protected blocks:
+
+- `generated`: facts that scripts may rewrite;
+- `manual`: short repo-local notes, conventions, sharp edges.
+
+Long architecture decisions live in `../docs/product/architecture/`.
+
+Update the map with `scripts/update-project-map.sh`. The script is repo-specific and updates only the generated block.
 
 ## Docker
 
-Вся работа ведётся через Docker. Исключение — git: все git-команды выполняются локально.
+Use Docker for all runtime, test, lint, and dependency work. Git runs locally.
 
-- Конфигурация — `compose.yml` (не `docker-compose.yml`)
-- Запускать сервисы, тесты, линтер только через `docker compose run --rm <service>` или `docker compose up`
-- Не использовать локальный venv, локальный pip, локальные интерпретаторы
-- После Docker build, если остаются dangling `<none>` images/layers, чистить только их:
+- Config file: `compose.yml`.
+- Use `docker compose run --rm <service>` or `docker compose up`.
+- Do not use local venv, local pip, or local interpreters.
+- After Docker builds, clean only dangling layers when needed:
   `docker image prune -f --filter "dangling=true"`.
-- Не запускать `docker system prune -a`, `docker volume prune` и не удалять named volumes без явного запроса пользователя.
+- Do not run `docker system prune -a`, `docker volume prune`, or remove named volumes unless explicitly requested.
 
-## Архитектура
+## Architecture
 
-<!-- Describe key architecture decisions here -->
+<!-- Describe key architecture decisions here. -->
 
-## Качество кода
+## Code Quality
 
 ```bash
-docker compose run --rm lint   # линтер
-docker compose run --rm test   # тесты
+docker compose run --rm lint
+docker compose run --rm test
 ```
 
-## Деплой
+## Deploy
 
-<!-- Describe deploy process or reference runbook-prod.md -->
+<!-- Describe deploy process or reference ../docs/runbook-prod.md. -->

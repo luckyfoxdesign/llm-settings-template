@@ -1,73 +1,82 @@
 # Workspace Project Map
-<!-- Обновляй вручную или через скрипт при изменении структуры. -->
-<!-- Читай перед задачами вместо сканирования всего workspace. -->
+<!-- Aggregates repo maps. Repo internals live in <repo>/PROJECT_MAP.md. -->
+<!-- Read this before scanning the workspace. -->
 
-Aggregating map of the [project-name] workspace. Repo-local карты — источник правды для деталей конкретного репо; этот файл собирает обзор верхнего уровня.
+Top-level map for the `[project-name]` workspace.
 
-## Workspace layout
+## Map Contract
 
-```
+- Workspace `PROJECT_MAP.md` is an aggregator: repos, repo-map links, shared commands, active task pointers.
+- Repo-local `<repo>/PROJECT_MAP.md` is the source of truth for repo internals: entrypoints, configs, Docker services, package scripts, key directories.
+- Long architecture decisions live in `docs/product/architecture/`, not in generated map sections.
+- Scripts may rewrite only generated sections; manual sections are protected.
+- Map update scripts are project-specific:
+  - workspace aggregator: `scripts/update-project-map.sh`
+  - repo-local updater: `<repo>/scripts/update-project-map.sh`
+
+## Workspace Layout
+
+```text
 dev/[project-name]/
 ├── AGENTS.md, CLAUDE.md, PROJECT_MAP.md
-├── docs/                     — продуктовая документация (под git, кроме wip/)
-├── scripts/                  — validate-docs-frontmatter.py, build-done-index.py и др.
-├── .claude/commands/         — workspace-уровневые скиллы
-├── _templates/sub-repo/      — шаблон для новых суб-репо (см. ниже)
-│
-├── app/                      — отдельный git repo (переименуй под свой стек)
-├── landing/                  — frontend/landing repo (опционально)
-└── nginx/                    — отдельный git repo
+├── docs/                     # product docs; docs/wip is gitignored
+├── scripts/                  # workspace scripts, including update-project-map.sh
+├── .claude/commands/         # workspace commands
+├── _templates/sub-repo/      # template for new code repos
+├── app/PROJECT_MAP.md        # app repo, has its own update-project-map.sh
+├── landing/PROJECT_MAP.md    # landing repo, has its own update-project-map.sh
+└── nginx/PROJECT_MAP.md      # nginx repo, has its own update-project-map.sh
 ```
 
-## Добавление нового суб-репо
+## Adding A Code Repo
 
-При создании нового суб-репо (`git init <repo-name>`) скопируй в него шаблон:
+After `git init <repo-name>`, copy the template:
 
 ```bash
 cp -r _templates/sub-repo/. <repo-name>/
 ```
 
-Затем замени плейсхолдеры `[project-name]` и `[repo-name]` в `CLAUDE.md` и `AGENTS.md`, и заполни секции архитектуры/тестов/деплоя.
+Then replace `[project-name]` and `[repo-name]`, fill `CLAUDE.md`, `AGENTS.md`, `PROJECT_MAP.md`, and implement or stub `<repo>/scripts/update-project-map.sh`.
 
 ## Repos
 
-| Репо | Карта | Status |
-|------|-------|--------|
+| Repo | Map | Status |
+|---|---|---|
 | app | `app/PROJECT_MAP.md` | — |
-| landing | `landing/package.json` | — |
-| nginx | `nginx/README.md` | — |
+| landing | `landing/PROJECT_MAP.md` | — |
+| nginx | `nginx/PROJECT_MAP.md` | — |
 
-## app (`app/`)
+## app
 
-См. `app/PROJECT_MAP.md` для актуального списка модулей и команд.
+See `app/PROJECT_MAP.md`.
 
-Ключевые команды:
 ```bash
 cd app
-docker compose up              # запуск
-docker compose run --rm test   # тесты
-docker compose run --rm lint   # линтер
+docker compose up
+docker compose run --rm test
+docker compose run --rm lint
 ```
 
-## landing (`landing/`)
+## landing
 
-Frontend/landing repo. См. `landing/package.json` и repo-local README/CLAUDE.md, если существуют.
+See `landing/PROJECT_MAP.md`.
 
-Ключевые команды:
 ```bash
 cd landing
-docker compose up              # запуск
-docker compose run --rm build  # сборка
+docker compose up
+docker compose run --rm build
 ```
 
-## nginx (`nginx/`)
+## nginx
 
-Prod nginx reverse proxy + SSL. См. `nginx/README.md`.
+See `nginx/PROJECT_MAP.md`.
 
-## Active tasks (`docs/wip/`)
+## Active Tasks
 
-<!-- Ссылки на docs/wip/ — обновляй вручную или скриптом -->
+<!-- generated:start active-tasks -->
+<!-- generated:end active-tasks -->
 
-## Backlog (`docs/backlog/todo/`)
+## Backlog
 
-<!-- Ссылки на docs/backlog/todo/ — обновляй вручную или скриптом -->
+<!-- generated:start backlog -->
+<!-- generated:end backlog -->

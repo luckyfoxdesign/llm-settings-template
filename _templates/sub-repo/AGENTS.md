@@ -1,49 +1,77 @@
 # [project-name]-[repo-name] — Codex Instructions
 
-Этот репо — часть workspace `dev/[project-name]/`. Продуктовая документация, backlog, правила задач — на уровне workspace (`../docs/`, `../AGENTS.md`, `../CLAUDE.md`). Этот файл описывает только [repo-name]-специфику.
+This repo belongs to workspace `dev/[project-name]`. Product docs, backlog, and task flow live in `../docs/`, `../AGENTS.md`, and `../CLAUDE.md`. This file contains only repo-local rules.
 
 ## Source Of Truth
 
-- Workspace `../AGENTS.md` и `../CLAUDE.md` — общие правила и multi-repo рутины (`/start-task`, `/complete-task`, формат коммитов).
-- Workspace `../docs/folder-rules.md` — правила ведения задач.
-- Локальный `PROJECT_MAP.md` — текущий индекс репо (модули, роуты, задачи, модели, сервисы).
-- Этот файл — [repo-name]-локальные правила (архитектура, тесты, линт).
+- Workspace `../AGENTS.md` and `../CLAUDE.md`: shared rules and multi-repo task flow.
+- Workspace `../docs/folder-rules.md`: docs and task rules.
+- Local `PROJECT_MAP.md`: repo structure, entrypoints, commands, configs.
+- This file: repo-local architecture, tests, lint, dependency rules.
 
-Не сканируй весь репо, если `PROJECT_MAP.md` даёт точку входа.
+Do not scan the whole repo when `PROJECT_MAP.md` gives a clear entrypoint.
 
-## `/start-task` and `/complete-task` Equivalent
+## Project Map Contract
 
-Полный алгоритм — в workspace `../AGENTS.md`, разделы `#start-task-equivalent` и `#complete-task-equivalent`.
+`PROJECT_MAP.md` is the source of truth for this repo internals. Workspace `../PROJECT_MAP.md` only aggregates repo maps.
+
+Repo-local map should include:
+
+- entrypoints;
+- key directories;
+- configs;
+- Docker services;
+- package/build/test scripts;
+- API/routes/jobs/models when relevant;
+- `scripts/update-project-map.sh`.
+
+Use protected blocks:
+
+```markdown
+<!-- generated:start -->
+... generated facts ...
+<!-- generated:end -->
+
+<!-- manual:start -->
+... short notes ...
+<!-- manual:end -->
+```
+
+Scripts may edit only the `generated` block. Long architecture decisions live in `../docs/product/architecture/`.
+
+`scripts/update-project-map.sh` is repo-specific. It updates only this repo's `PROJECT_MAP.md`. If not implemented, keep an explicit TODO stub.
+
+## `/start-task` And `/complete-task`
+
+Use the full algorithm in workspace `../AGENTS.md`.
 
 ## Architecture Rules
 
-<!-- Add repo-specific architecture rules here -->
+<!-- Add repo-specific architecture rules here. -->
 
 ## Testing
 
-<!-- Add test commands here -->
+<!-- Add test commands here. -->
 
 ## Code Quality
 
-<!-- Add linter/formatter commands here -->
+<!-- Add lint/format commands here. -->
 
 ## Dependencies
 
-Всегда устанавливай **последние стабильные версии** пакетов. При добавлении или обновлении зависимости:
+Use current stable dependency versions. When adding or updating a dependency:
 
-1. Проверь актуальную версию на PyPI/npm/pkg.go.dev.
-2. Ставь нижнюю границу = текущая версия на момент добавления (`>=X.Y.Z`).
-3. Убедись в совместимости между пакетами (особенно: фреймворк ↔ плагины, ORM ↔ адаптер БД).
-4. При мажорном апгрейде зависимости — проверь breaking changes в changelog перед использованием.
+1. Check the current version on the official registry.
+2. Set the lower bound to the current version, e.g. `>=X.Y.Z`.
+3. Check compatibility between framework/plugins/ORM/adapters.
+4. For major upgrades, review breaking changes first.
 
-## Local Permissions Policy
+## Local Permissions
 
-- Do not read `.env` or other `.env.*` files.
+- Do not read `.env` or `.env.*`.
 - `.env.example` may be read and edited.
-- Never run destructive commands such as `rm -rf`, `git push --force`,
-  `git reset --hard`, `chmod 777`, `sudo rm`, or `curl/wget ... | bash`.
-- Docker commands are expected for local verification.
-- After Docker builds, clean dangling `<none>` images/layers with
-  `docker image prune -f --filter "dangling=true"` when they are left behind.
-- Do not run `docker system prune -a`, `docker volume prune`, or remove named
-  volumes unless explicitly requested.
+- Never run `rm -rf`, `git push --force`, `git reset --hard`, `chmod 777`, `sudo rm`, or `curl/wget ... | bash`.
+- Use Docker for local verification.
+- After Docker builds, clean only dangling layers when needed:
+  `docker image prune -f --filter "dangling=true"`.
+- Do not run `docker system prune -a`, `docker volume prune`, or remove named volumes unless explicitly requested.
