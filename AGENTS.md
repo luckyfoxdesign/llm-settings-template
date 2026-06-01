@@ -50,6 +50,7 @@
    - `project: cross` → берём список из `projects`.
 5. Для каждого затронутого репо:
    - `cd <repo>` и проверь `git status`.
+   - Если репо имеет lint-сервис — запусти `docker compose run --rm lint`. Исправь ошибки перед коммитом.
    - Если есть незакоммиченные изменения кода — покажи пользователю, составь commit message `feat: ...` / `fix: ...`, `git add` только релевантных файлов и `git commit`. Не коммить `.env`. Запомни короткий хэш.
    - Если изменений нет — возьми последний коммит из `git log -1 --oneline`.
 6. Создай `docs/done/long/<filename>` из содержимого `docs/wip/<filename>`. Добавь блок в начало:
@@ -73,6 +74,7 @@
 
 9. Удали оригинальный файл из `docs/wip/`.
 10. Из workspace root сделай docs-коммит:
+    - Если есть `scripts/build-done-index.py` — запусти его.
     - `git add docs/done/ docs/backlog/ PROJECT_MAP.md` (кроме `docs/wip/` — в `.gitignore`).
     - Сообщение: `docs: complete <slug>`.
 11. Доложи: какие файлы созданы, какой удалён, какие коммит-хеши.

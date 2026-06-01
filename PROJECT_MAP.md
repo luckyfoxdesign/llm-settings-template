@@ -10,6 +10,7 @@ Aggregating map of the [project-name] workspace. Repo-local карты — ис�
 dev/[project-name]/
 ├── AGENTS.md, CLAUDE.md, PROJECT_MAP.md
 ├── docs/                     — продуктовая документация (под git, кроме wip/)
+├── scripts/                  — validate-docs-frontmatter.py, build-done-index.py и др.
 ├── .claude/commands/         — workspace-уровневые скиллы
 ├── _templates/sub-repo/      — шаблон для новых суб-репо (см. ниже)
 │
