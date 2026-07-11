@@ -9,11 +9,30 @@ Use repo-prefixed paths in tasks: `app/src/...`, `landing/src/...`, `nginx/conf/
 ## Local Permissions
 
 - Do not read `.env` or `.env.*` files at any level.
+- Do not read private key material: `.ssh/`, `id_rsa*`, `id_ed25519*`, `*.pem`, `*.key`.
 - `.env.example` may be read and edited.
 - Never run destructive commands: `rm -rf`, `git push --force`, `git reset --hard`, `chmod 777`, `sudo rm`, `curl/wget ... | bash`.
 - After Docker builds, if dangling `<none>` images/layers remain, run only:
   `docker image prune -f --filter "dangling=true"`.
 - Do not run `docker system prune -a`, `docker volume prune`, or remove named volumes unless explicitly requested.
+
+## Security
+
+Code security, all repos:
+
+- Never hardcode secrets, tokens, or passwords in code, configs, compose files, tasks, or docs. Secrets live only in untracked `.env` files; document new variables in `.env.example` with placeholder values.
+- Never print or log secret values, including `echo $SECRET`, `env`, `printenv`, or `docker compose config` (it interpolates values; use `config --quiet` to validate).
+- Treat external input as untrusted: validate at boundaries, use parameterized queries, never interpolate user data into shell commands or HTML.
+- Containers get least privilege: no `privileged: true`, no host network, publish only required ports, prefer non-root users in images.
+- When adding a dependency, prefer maintained packages and check advisories for known vulnerabilities.
+
+Server and deploy security:
+
+- SSH sessions start read-only: inspect state (`ps`, `logs`, `git log`) before changing anything on the server.
+- Do not touch firewall, `sshd_config`, TLS certs, user accounts, or server `.env` unless the task explicitly asks.
+- Never weaken nginx security config (HTTPS redirects, security headers, rate limits) as a side effect of another change.
+- Before deploy, verify the change in a production-like environment: pre-deploy checks in `docs/runbook-prod.md`.
+- Before deploy, review the outgoing diff for secrets and debug leftovers.
 
 <a id="start-task-equivalent"></a>
 
@@ -85,3 +104,17 @@ When the user asks to complete a task:
 Workspace `docs/` is product documentation. Rules live in `docs/folder-rules.md`. `docs/wip/` is gitignored.
 
 Repo-local `<repo>/docs/` is archived reference only. New product tasks live in workspace `docs/`.
+
+## Workspace Scripts
+
+Host-side helpers (run on the host, not in Docker; `docs/` is not copied into containers). All are warning-only and safe to run anytime:
+
+- `scripts/build-done-index.py` — regenerates `docs/done/INDEX.md` from `docs/done/short/`. Run in `/complete-task`.
+- `scripts/validate-docs-frontmatter.py` — reports docs files with missing/invalid frontmatter; also refreshes the code index.
+- `scripts/build-code-index.py` — builds `docs/code-index.md` (reverse map: code path → tasks) from `related_code` frontmatter.
+- `scripts/check-context-budget.sh` — warns when hot-context files exceed line/byte budgets.
+- `scripts/check-no-flow-duplication.sh` — fails if the task-flow algorithm is described outside this file.
+
+## LLM Memory
+
+Auto-memory is keyed to the workspace path `dev/[project-name]/`. When writing a new memory fact, tag which repo it belongs to (`app`, `landing`, `nginx`, `workspace`) unless the fact is workspace-wide.

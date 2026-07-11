@@ -191,7 +191,7 @@ Optional fields:
 
 - `created`: `YYYY-MM-DD`
 - `area`: topic list
-- `related_code`: repo-prefixed code paths, e.g. `app/src/...`
+- `related_code`: repo-prefixed code paths, e.g. `app/src/...`. Recommended: `scripts/build-code-index.py` builds a reverse `code -> tasks` index (`docs/code-index.md`) from this field.
 - `related_docs`: docs paths
 - `source.kind`: `discussion`, `issue`, `observation`
 
@@ -201,6 +201,18 @@ Rules:
 - `priority` is not used.
 - Do not store secrets, env values, or temporary debug notes.
 - Existing archived `done/` files without frontmatter do not need forced migration.
+
+Validate:
+
+```bash
+python3 scripts/validate-docs-frontmatter.py
+```
+
+Runs on the host (not Docker; `docs/` is not copied into containers), needs only system Python 3.9+, and always exits 0 — it reports, it does not block.
+
+## Done Index
+
+`docs/done/INDEX.md` is generated from `docs/done/short/` by `scripts/build-done-index.py`, grouped by project and sorted newest-first. Regenerate it in `/complete-task`; do not edit it by hand.
 
 ## Hot Context Budget
 

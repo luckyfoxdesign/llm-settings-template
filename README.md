@@ -78,12 +78,25 @@ Project maps prevent agents from scanning the whole repo.
   - `scripts/update-project-map.sh`
   - `<repo>/scripts/update-project-map.sh`
 
+## Workspace Scripts
+
+Host-side helpers in `scripts/` (run on the host, not in Docker). All are warning-only:
+
+- `init-workspace.sh` — create the docs folder structure (run once after cloning).
+- `build-done-index.py` — regenerate `docs/done/INDEX.md` from done summaries.
+- `validate-docs-frontmatter.py` — report docs files with missing/invalid frontmatter.
+- `build-code-index.py` — build `docs/code-index.md` from `related_code` frontmatter.
+- `check-context-budget.sh` — warn when hot-context files exceed their budgets.
+- `check-no-flow-duplication.sh` — keep the task-flow algorithm only in `AGENTS.md`.
+
 ## Safety Defaults
 
-- Do not read `.env` or `.env.*`.
+- Do not read `.env`, `.env.*`, or private key material (`.ssh/`, `*.pem`, `*.key`).
 - `.env.example` may be read and edited.
 - Code work is Docker-only.
 - Do not run destructive commands unless explicitly requested.
-- Never commit secrets.
+- Never commit or log secrets.
+- On the server: inspect before modifying; firewall, sshd, TLS, and server `.env` are off-limits unless the task explicitly asks.
+- Before deploy: pre-deploy checks in `docs/runbook-prod.md` (tests, lint, prod build, diff review).
 
-See `AGENTS.md` for the exact policy.
+See `AGENTS.md` → Security for the exact policy.

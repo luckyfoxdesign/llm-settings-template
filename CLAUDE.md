@@ -40,9 +40,16 @@ Grep("pattern", path: "nginx")
 
 ## Local Permissions
 
-- Do not read `.env` or `.env.*`.
+- Do not read `.env`, `.env.*`, or private key material (`.ssh/`, `id_rsa*`, `*.pem`, `*.key`).
 - `.env.example` may be read and edited.
 - Never run `rm -rf`, `git push --force`, `git reset --hard`, `chmod 777`, `sudo rm`, or `curl/wget ... | bash`.
+
+## Security
+
+- Never hardcode or log secrets; secrets live only in untracked `.env`, new variables go to `.env.example` as placeholders.
+- Before deploy: run pre-deploy checks from `docs/runbook-prod.md` and review the outgoing diff for secrets and debug leftovers.
+- On the server: inspect before modifying; do not touch firewall, sshd, TLS, or server `.env` unless the task explicitly asks.
+- Full policy: `AGENTS.md` → Security.
 
 ## SSH
 

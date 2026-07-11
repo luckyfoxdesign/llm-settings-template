@@ -66,9 +66,21 @@ Use current stable dependency versions. When adding or updating a dependency:
 3. Check compatibility between framework/plugins/ORM/adapters.
 4. For major upgrades, review breaking changes first.
 
+## Security
+
+Full policy: workspace `../AGENTS.md` → Security. Repo-local baseline:
+
+- Never hardcode secrets in code, configs, or compose files; new env variables go to `.env.example` with placeholder values.
+- Never print or log secret values (`echo $SECRET`, `env`, `docker compose config` without `--quiet`).
+- Validate external input at boundaries; use parameterized queries; never interpolate user data into shell commands or HTML.
+- Containers: no `privileged: true`, no host network, publish only required ports, prefer non-root users.
+
+<!-- Add repo-specific security rules here: auth flow invariants, rate limits, CORS policy, etc. -->
+
 ## Local Permissions
 
 - Do not read `.env` or `.env.*`.
+- Do not read private key material: `.ssh/`, `id_rsa*`, `*.pem`, `*.key`.
 - `.env.example` may be read and edited.
 - Never run `rm -rf`, `git push --force`, `git reset --hard`, `chmod 777`, `sudo rm`, or `curl/wget ... | bash`.
 - Use Docker for local verification.

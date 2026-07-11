@@ -27,10 +27,56 @@ LOG_LEVEL=info
 ssh [your-server-alias]
 ```
 
+Agent rules on the server: start read-only (`ps`, `logs`, `git log`); do not change firewall, `sshd_config`, TLS certs, user accounts, or `.env` unless the task explicitly asks.
+
+## Server Security Baseline
+
+<!-- Fill in what is actually configured on the VPS so agents and humans can verify it, e.g.:
+     - firewall: ufw, only 22/80/443 open
+     - ssh: key-only auth, root login disabled
+     - fail2ban on sshd
+     - TLS: certbot auto-renew (systemd timer)
+     - docker: no containers with published ports besides nginx -->
+
+| Control | Status / How to verify |
+|---|---|
+| Firewall | <!-- `sudo ufw status` --> |
+| SSH hardening | <!-- key-only, no root login --> |
+| TLS renewal | <!-- `systemctl list-timers | grep certbot` --> |
+| Exposed ports | <!-- `docker ps --format '{{.Names}}\t{{.Ports}}'` --> |
+
+## Pre-Deploy Checks
+
+Run locally before every deploy:
+
+```bash
+cd app
+docker compose run --rm test
+docker compose run --rm lint
+docker compose -f compose.prod.yml build
+docker compose -f compose.prod.yml config --quiet  # validates compose + env interpolation without printing secrets
+```
+
+<!-- If the prod stack can run locally, add the commands to start it against a local .env
+     and hit the healthcheck before deploying. -->
+
+Then:
+
+- Review the outgoing diff for hardcoded secrets, debug leftovers, and weakened security config: `git log -p origin/main..HEAD` or a security review of the branch.
+- If the change adds env variables: document them in `.env.example` and add real values to the server `.env` before deploying code that requires them.
+- If the change includes migrations: confirm a fresh backup exists (see Backup / Restore).
+
 ## Deploy
 
 ```bash
 ssh [your-server-alias] "cd [~/project-path] && bash scripts/deploy.sh"
+```
+
+After deploy, verify:
+
+```bash
+ssh [your-server-alias] "cd [~/project-path] && docker compose -f compose.prod.yml ps"
+curl -fsS https://[domain]/[healthcheck-path]
 ```
 
 `scripts/deploy.sh` should run: `git pull`, `docker compose -f compose.prod.yml build`, migrations if needed, then `docker compose -f compose.prod.yml up -d`.
