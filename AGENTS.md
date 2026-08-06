@@ -50,7 +50,7 @@ When the user asks to start a task:
    - `docs/wip/<filename>`
    - for `project: app|landing|nginx`: `<repo>/PROJECT_MAP.md` and `<repo>/CLAUDE.md` if present
    - for `project: cross`: repo-local maps for every repo in `projects`
-6. Show a short 3-7 step plan and wait for user confirmation before implementation.
+6. Freeze the contract: fill `Non-goals`, `Invariants`, `Change Budget`, and `Verification` in the task file. Show a short 3-7 step plan and wait for user confirmation before implementation.
 7. Implement according to the plan and repo-local `AGENTS.md`.
 8. When done, say: `Done. You can close the task with /complete-task.`
 
@@ -71,7 +71,8 @@ When the user asks to complete a task:
    - `project: cross` -> repos from `projects`
 5. For each affected code repo:
    - check `git status`
-   - if a lint service exists, run `docker compose run --rm lint`
+   - run `<repo>/scripts/verify.sh` and show its output as evidence
+   - check the diff against the task's `Change Budget`
    - if relevant code changes exist, show them, choose `feat: ...` or `fix: ...`, `git add` only relevant files, commit, and record the short hash
    - never commit `.env`
    - if no changes exist, record `git log -1 --oneline`
@@ -99,6 +100,12 @@ When the user asks to complete a task:
     - commit as `docs: complete <slug>`
 11. Report created files, deleted file, and commit hashes.
 
+## Stop Rule
+
+A task is done when all hold at once: required tests pass; build, type check, and analyzers pass; no confirmed `blocker`/`high` findings; the diff stays inside the task's `Change Budget`; at most one reviewer pass has run.
+
+A further iteration requires new external evidence. Contract shape, review policy, and severity routing: `docs/product/architecture/verification-contract.md` and `docs/folder-rules.md`.
+
 ## Docs
 
 Workspace `docs/` is product documentation. Rules live in `docs/folder-rules.md`. `docs/wip/` is gitignored.
@@ -114,6 +121,7 @@ Host-side helpers (run on the host, not in Docker; `docs/` is not copied into co
 - `scripts/build-code-index.py` — builds `docs/code-index.md` (reverse map: code path → tasks) from `related_code` frontmatter.
 - `scripts/check-context-budget.sh` — warns when hot-context files exceed line/byte budgets.
 - `scripts/check-no-flow-duplication.sh` — fails if the task-flow algorithm is described outside this file.
+- `scripts/check-task-contract.py` — warns when a task file is missing contract sections.
 
 ## LLM Memory
 

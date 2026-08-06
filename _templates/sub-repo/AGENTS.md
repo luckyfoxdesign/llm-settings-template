@@ -57,6 +57,31 @@ Use the full algorithm in workspace `../AGENTS.md`.
 
 <!-- Add lint/format commands here. -->
 
+## Verification Gates
+
+`scripts/verify.sh` is this repo's single gate. It runs the gates below in order and exits non-zero on the first failure. A task stops on that exit code, not on a judgement about the code.
+
+| Gate | Command | Required |
+|---|---|---|
+| lint | TODO | yes |
+| test | TODO | yes |
+| typecheck | TODO | no |
+| build | TODO | no |
+
+Fill this table in and mirror it in `scripts/verify.sh`. Until the required gates are set, the script fails on purpose.
+
+Protocol: workspace `../docs/product/architecture/verification-contract.md`. Do not restate it here.
+
+## Change Budget
+
+Default fuse for a task in this repo, unless the task file sets its own:
+
+- at most 5 production files;
+- no new dependencies;
+- no new abstraction layers without a test that requires them.
+
+Fix the budget before implementation, not after.
+
 ## Dependencies
 
 Use current stable dependency versions. When adding or updating a dependency:

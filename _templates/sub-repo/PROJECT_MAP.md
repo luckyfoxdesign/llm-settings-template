@@ -19,13 +19,15 @@
 ├── CLAUDE.md
 ├── PROJECT_MAP.md
 ├── scripts/
-│   └── update-project-map.sh
+│   ├── update-project-map.sh
+│   └── verify.sh
 └── ...
 ```
 
 ## Commands
 
 ```bash
+bash scripts/verify.sh
 docker compose up
 docker compose run --rm lint
 docker compose run --rm test
@@ -39,6 +41,7 @@ docker compose run --rm test
 
 - `compose.yml` — Docker services.
 - `scripts/update-project-map.sh` — updates this repo map generated block.
+- `scripts/verify.sh` — single executable gate; exits non-zero on the first failing gate.
 
 ## Notable Directories
 

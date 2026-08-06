@@ -37,6 +37,7 @@ Use Docker for all runtime, test, lint, and dependency work. Git runs locally.
 ## Code Quality
 
 ```bash
+bash scripts/verify.sh          # single gate: runs all of the below in order
 docker compose run --rm lint
 docker compose run --rm test
 ```

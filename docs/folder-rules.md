@@ -41,9 +41,12 @@ Every code repo must include:
 ├── CLAUDE.md
 ├── PROJECT_MAP.md
 ├── scripts/
-│   └── update-project-map.sh
+│   ├── update-project-map.sh
+│   └── verify.sh
 └── ...
 ```
+
+`scripts/verify.sh` is the repo's single executable gate: it runs lint, test, type check, and build in order and exits non-zero on the first failure. A task in that repo stops on this exit code. New repos get it from `_templates/sub-repo/` with TODO stubs that fail until filled in.
 
 Repo-local `PROJECT_MAP.md` is the source of truth for repo structure: entrypoints, key directories, configs, Docker services, package scripts, API/routes/jobs/models when relevant.
 
@@ -77,6 +80,7 @@ Rules:
 - Workspace map composition is done by `scripts/update-project-map.sh`.
 - Repo-local map generation is done by `<repo>/scripts/update-project-map.sh`.
 - If a map script is not implemented yet, add a stub with explicit TODOs.
+- `scripts/verify.sh` is listed in the repo map `Commands` block, and its gates are tabulated in `<repo>/AGENTS.md`.
 
 ## Task Names
 
@@ -91,6 +95,45 @@ Task filename format: `dd-mm-yy-<project>-<slug>.md`.
 | cross-repo | `dd-mm-yy-cross-<a>-<b>-...` | `project: cross`, `projects: [...]` |
 
 `workspace` tasks change only workspace rules, scripts, or docs.
+
+## Task Contract
+
+Every task file in `docs/backlog/todo/` and `docs/wip/` carries these sections. Shape example: `docs/backlog/todo/00-00-00-app-example-task.md`. Rationale: `docs/product/architecture/verification-contract.md`.
+
+| Section | Purpose |
+|---|---|
+| `Goal` | Expected outcome, one or two sentences |
+| `Context` | Origin, known facts, constraints |
+| `Non-goals` | What must not change |
+| `Invariants` | What must still hold |
+| `Change Budget` | Max production files, dependency and abstraction limits |
+| `Verification` | The exact commands that produce the pass/fail signal |
+| `Done When` | Stop conditions |
+
+`Implementation Steps` and `Related` are conventional but not part of the contract.
+
+`Non-goals`, `Invariants`, `Change Budget`, and `Verification` are frozen before implementation and changed only on a new external fact: a contradicting test, a user requirement, API documentation, a production incident, or a confirmed architectural constraint.
+
+For `project: app|landing|nginx`, `Verification` is `bash <repo>/scripts/verify.sh`. For `project: workspace`, it is the relevant workspace scripts.
+
+Check:
+
+```bash
+python3 scripts/check-task-contract.py
+```
+
+Warning-only, always exits 0. Files carrying `TEMPLATE-EXAMPLE` inside an HTML comment are skipped.
+
+### Severity Routing
+
+After a review pass, findings that are not blocking go to their folder rather than into the current task:
+
+| Severity | Destination |
+|---|---|
+| `blocker`, `high` | fix in the current task |
+| `medium` | `docs/backlog/todo/` |
+| `speculative` | `docs/ideas/` |
+| cosmetic | dropped |
 
 ## Task Lifecycle
 

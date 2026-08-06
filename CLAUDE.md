@@ -10,6 +10,7 @@ Code repos (`app/`, `landing/`, `nginx/`) are separate git repos and are ignored
 |---|---|
 | Workspace map and repo commands | `PROJECT_MAP.md` |
 | Task and docs rules | `docs/folder-rules.md` |
+| Verification contract | `docs/product/architecture/verification-contract.md` |
 | `/start-task`, `/complete-task` flow | `AGENTS.md` |
 | Production deploy / rollback | `docs/runbook-prod.md` |
 | Local development | `docs/runbook-local.md` |
@@ -53,8 +54,4 @@ Grep("pattern", path: "nginx")
 
 ## SSH
 
-```bash
-ssh [your-server-alias]
-```
-
-Deploy and rollback: `docs/runbook-prod.md`. Local setup: `docs/runbook-local.md`.
+`ssh [your-server-alias]`. Deploy and rollback: `docs/runbook-prod.md`. Local setup: `docs/runbook-local.md`.
