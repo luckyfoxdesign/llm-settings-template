@@ -12,7 +12,7 @@ related_docs:
 ---
 
 **Commits:**
-- workspace `PENDING` — "docs: complete workspace-verification-contract"
+- workspace `a297a02` — "docs: complete workspace-verification-contract"
 
 # Wire The Verification Contract Into The Workspace Template
 
