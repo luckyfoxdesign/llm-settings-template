@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Task"
+  short_description: "Create a ready, fully contracted project task"
+  default_prompt: "Use $create-task to turn this request into a ready backlog task."

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Ensures the start-task/complete-task flow algorithm is described only in AGENTS.md.
+# Ensures the create/start/complete task-flow algorithms are described only in AGENTS.md.
 # Detects step-by-step algorithm descriptions outside the canonical file.
 PATTERNS=(
+  "Create, without overwriting, .*docs/backlog/todo"
   "Move the chosen file to .*docs/wip"
   "Move the selected file from.*docs/backlog/todo"
   "Identify the active task in .*docs/wip"

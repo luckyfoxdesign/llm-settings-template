@@ -1,4 +1,4 @@
-# [project-name]-[repo-name] — Codex Instructions
+# [project-name]-[repo-name] — Agent Instructions
 
 This repo belongs to workspace `dev/[project-name]`. Product docs, backlog, and task flow live in `../docs/`, `../AGENTS.md`, and `../CLAUDE.md`. This file contains only repo-local rules.
 
@@ -41,9 +41,9 @@ Scripts may edit only the `generated` block. Long architecture decisions live in
 
 `scripts/update-project-map.sh` is repo-specific. It updates only this repo's `PROJECT_MAP.md`. If not implemented, keep an explicit TODO stub.
 
-## `/start-task` And `/complete-task`
+## Task Lifecycle
 
-Use the full algorithm in workspace `../AGENTS.md`.
+Use `/create-task`, `/start-task`, and `/complete-task` through the full algorithms in workspace `../AGENTS.md`.
 
 ## Architecture Rules
 

@@ -1,6 +1,6 @@
 # [project-name]-[repo-name]
 
-Part of workspace `dev/[project-name]`. Product docs, backlog, and shared commands live in `../docs/`, `../AGENTS.md`, `../CLAUDE.md`, and `../.claude/commands/`.
+Part of workspace `dev/[project-name]`. Product docs, backlog, shared skills, and commands live in `../docs/`, `../AGENTS.md`, `../CLAUDE.md`, `../.agents/skills/`, and `../.claude/commands/`.
 
 This file is repo-local context only.
 

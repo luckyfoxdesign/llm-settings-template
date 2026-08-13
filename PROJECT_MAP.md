@@ -21,7 +21,9 @@ dev/[project-name]/
 ├── AGENTS.md, CLAUDE.md, PROJECT_MAP.md
 ├── docs/                     # product docs; docs/wip is gitignored
 ├── scripts/                  # workspace scripts, including update-project-map.sh
-├── .claude/commands/         # workspace commands
+├── .agents/skills/           # shared, model-neutral workspace skills
+├── .claude/skills/           # Claude links to shared skills
+├── .claude/commands/         # Claude command adapters
 ├── _templates/sub-repo/      # template for new code repos
 ├── app/PROJECT_MAP.md        # app repo, has its own update-project-map.sh
 ├── landing/PROJECT_MAP.md    # landing repo, has its own update-project-map.sh

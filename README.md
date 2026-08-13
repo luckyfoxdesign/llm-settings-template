@@ -45,7 +45,7 @@ For humans:
 
 For coding agents:
 
-- `AGENTS.md` — required behavior, permissions, `/start-task`, `/complete-task`.
+- `AGENTS.md` — required behavior, permissions, and the complete task lifecycle commands.
 - `CLAUDE.md` — compact workspace context.
 - `<repo>/AGENTS.md` and `<repo>/CLAUDE.md` — repo-local rules.
 - `<repo>/PROJECT_MAP.md` — repo-local structure map.
@@ -61,6 +61,7 @@ docs/backlog/todo/  ->  docs/wip/  ->  docs/done/long/
 
 Use:
 
+- `/create-task` to turn a request or idea into a ready task with a complete, frozen contract.
 - `/start-task` to move a task into WIP, read context, and plan.
 - `/complete-task` to write done docs, collect commits, and close the task.
 

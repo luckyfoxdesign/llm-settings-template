@@ -1,0 +1,4 @@
+interface:
+  display_name: "Complete Task"
+  short_description: "Verify, record, and close an active task"
+  default_prompt: "Use $complete-task to verify and close the active task."

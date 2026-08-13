@@ -1,0 +1,4 @@
+interface:
+  display_name: "Start Task"
+  short_description: "Start a ready backlog task safely"
+  default_prompt: "Use $start-task to start this ready backlog task."
