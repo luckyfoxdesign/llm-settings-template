@@ -55,10 +55,10 @@ Three layers, each owned by exactly one place. Nothing is duplicated across repo
 | Layer | Owner | Contents |
 |---|---|---|
 | Protocol | Workspace `AGENTS.md` + this file | Contract shape, review policy, stop rule, severity routing |
-| Gates | `<repo>/AGENTS.md` + `<repo>/scripts/verify.sh` | Concrete pass/fail commands, repo change budget |
+| Gates | `scripts/verify.sh` and `<repo>/scripts/verify.sh` | Concrete pass/fail commands and change budgets |
 | Contract | The task file in `docs/wip/` | Per-task goal, non-goals, invariants, budget, verification |
 
-The protocol is universal and written once. The gates are repo-specific and cannot be centralized — only `app/`, `landing/`, and `nginx/` know their own test, lint, type-check, and build commands. Workspace tasks (`project: workspace`) use the workspace scripts as their gate instead of Docker.
+The protocol is universal and written once. Code gates are repo-specific because only `app/`, `landing/`, and `nginx/` know their test, lint, type-check, and build commands. Workspace tasks use root `scripts/verify.sh`, which runs workspace validators in strict mode instead of Docker.
 
 ### Executable gate
 
@@ -69,6 +69,10 @@ Each repo exposes one entrypoint:
 ```
 
 It runs that repo's gates in order and exits non-zero on the first failure. This matters more than any prose rule: while gates are described in text, a model can reinterpret them; as a single exit code, it cannot. The script is listed in the repo `PROJECT_MAP.md` `Commands` block.
+
+The workspace exposes the same contract at `scripts/verify.sh`. Its component
+scripts stay warning-only for exploratory use; the wrapper opts into strict
+exit codes and stops on the first violation.
 
 ### Task contract
 
@@ -85,6 +89,10 @@ Frozen before implementation, changed only on new external fact — a contradict
 | `Done When` | The stop conditions below |
 
 `Change Budget` is an engineering fuse, not a universal threshold. Objectivity comes from fixing it **before the model sees the implementation**, not from the number itself.
+
+At completion, each `Done When` item must cite concise evidence: command output,
+a diff/path, or a commit. An unchecked item and an item with no reproducible
+evidence are both failures; prose confidence is not evidence.
 
 ### Review policy
 
@@ -104,6 +112,7 @@ The reviewer decides **whether to intervene** as a separate step before deciding
 
 A task is done when all of the following hold at once:
 
+- every `Done When` item has recorded evidence;
 - required acceptance and regression tests pass;
 - build, type check, and required analyzers pass;
 - no confirmed `blocker`/`high` findings;
@@ -133,4 +142,5 @@ Generators and critics will change. The durable principle is that completion cri
 
 ## Implementation
 
-Tracked by `docs/backlog/todo/04-08-26-workspace-verification-contract.md`.
+Implemented through workspace task lifecycle rules, strict root/repo
+`scripts/verify.sh` entrypoints, and task-local `Verification` plus `Done When`.

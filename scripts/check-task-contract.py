@@ -2,7 +2,7 @@
 """Report task files that are missing verification-contract sections.
 
 Contract shape: docs/product/architecture/verification-contract.md -> Task contract.
-Runs on the host with system Python 3.9+. Warning-only: always exits 0.
+Runs on the host with system Python 3.9+. Warning-only unless --strict is used.
 """
 
 import re
@@ -51,6 +51,12 @@ def missing_sections(text: str) -> List[str]:
 
 
 def main() -> int:
+    args = sys.argv[1:]
+    if args not in ([], ["--strict"]):
+        print("Usage: check-task-contract.py [--strict]", file=sys.stderr)
+        return 2
+    strict = args == ["--strict"]
+
     incomplete: List[Tuple[str, List[str]]] = []
     checked = 0
 
@@ -84,7 +90,7 @@ def main() -> int:
         print("OK — {0} task file(s) carry a full contract.".format(checked))
 
     print("")
-    return 0
+    return 1 if strict and incomplete else 0
 
 
 if __name__ == "__main__":

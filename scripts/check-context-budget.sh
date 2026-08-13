@@ -1,7 +1,19 @@
 #!/usr/bin/env bash
-# Check hot-context files against token budget limits. Warning-only, always exits 0.
+# Check hot-context files against token budget limits.
+# Default is warning-only; --strict exits non-zero when a limit is exceeded.
 
 set -euo pipefail
+
+STRICT=0
+if [[ "$#" -gt 1 ]]; then
+  echo "Usage: $0 [--strict]" >&2
+  exit 2
+fi
+case "${1:-}" in
+  "") ;;
+  --strict) STRICT=1 ;;
+  *) echo "Usage: $0 [--strict]" >&2; exit 2 ;;
+esac
 
 WORKSPACE_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PROJECT_KEY=$(echo "$WORKSPACE_ROOT" | tr '/' '-')
@@ -80,3 +92,7 @@ else
   echo -e "${GRN}All files within budget.${RST}"
 fi
 echo ""
+
+if [[ "$STRICT" -eq 1 && "$WARN" -eq 1 ]]; then
+  exit 1
+fi

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Report docs/ files with missing or invalid YAML frontmatter.
 
-Runs on the host with system Python 3.9+. Warning-only: always exits 0.
+Runs on the host with system Python 3.9+. Warning-only unless --strict is used.
 """
 
 import subprocess
@@ -64,6 +64,12 @@ def extract_frontmatter(text: str) -> Optional[Dict]:
 
 
 def main() -> int:
+    args = sys.argv[1:]
+    if args not in ([], ["--strict"]):
+        print("Usage: validate-docs-frontmatter.py [--strict]", file=sys.stderr)
+        return 2
+    strict = args == ["--strict"]
+
     if not DOCS_ROOT.exists():
         print("No docs/ directory — nothing to validate.")
         return 0
@@ -133,10 +139,14 @@ def main() -> int:
         print("\nTotal: {0} file(s) need attention.".format(len(missing) + len(invalid)))
 
     build_index = Path(__file__).parent / "build-code-index.py"
+    index_failed = False
     if build_index.exists():
-        subprocess.run([sys.executable, str(build_index)], check=False)
+        result = subprocess.run([sys.executable, str(build_index)], check=False)
+        index_failed = result.returncode != 0
+        if index_failed:
+            print("Code index refresh failed with exit {0}.".format(result.returncode))
 
-    return 0
+    return 1 if strict and (missing or invalid or index_failed) else 0
 
 
 if __name__ == "__main__":

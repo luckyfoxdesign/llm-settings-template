@@ -48,6 +48,10 @@ Every code repo must include:
 
 `scripts/verify.sh` is the repo's single executable gate: it runs lint, test, type check, and build in order and exits non-zero on the first failure. A task in that repo stops on this exit code. New repos get it from `_templates/sub-repo/` with TODO stubs that fail until filled in.
 
+Workspace tasks use root `scripts/verify.sh`. It invokes the workspace checks in
+strict mode and exits non-zero on the first violation. The individual checks
+remain warning-only when called without `--strict`.
+
 Repo-local `PROJECT_MAP.md` is the source of truth for repo structure: entrypoints, key directories, configs, Docker services, package scripts, API/routes/jobs/models when relevant.
 
 Recommended repo map shape:
@@ -114,7 +118,7 @@ Every task file in `docs/backlog/todo/` and `docs/wip/` carries these sections. 
 
 `Non-goals`, `Invariants`, `Change Budget`, and `Verification` are frozen before implementation and changed only on a new external fact: a contradicting test, a user requirement, API documentation, a production incident, or a confirmed architectural constraint.
 
-For `project: app|landing|nginx`, `Verification` is `bash <repo>/scripts/verify.sh`. For `project: workspace`, it is the relevant workspace scripts.
+For `project: app|landing|nginx`, `Verification` includes `bash <repo>/scripts/verify.sh`. For `project: workspace`, it includes `bash scripts/verify.sh`. Add narrower acceptance commands when the standard gate does not prove the requested behavior.
 
 Check:
 
@@ -148,6 +152,10 @@ After a review pass, findings that are not blocking go to their folder rather th
    - create `docs/done/short/<filename>`;
    - link the two files;
    - delete the original `docs/wip/<filename>`.
+
+Completion is fail-closed: run every command in `Verification` and the
+applicable gate, then record evidence for every `Done When` item. Failed,
+missing, or unverifiable evidence blocks done records and commits.
 
 ## Done Commit Block
 
@@ -251,7 +259,7 @@ Validate:
 python3 scripts/validate-docs-frontmatter.py
 ```
 
-Runs on the host (not Docker; `docs/` is not copied into containers), needs only system Python 3.9+, and always exits 0 — it reports, it does not block.
+Runs on the host (not Docker; `docs/` is not copied into containers), needs only system Python 3.9+, and exits 0 by default. Root `scripts/verify.sh` uses `--strict` so reported violations block workspace completion.
 
 ## Done Index
 
@@ -272,7 +280,7 @@ Check manually:
 bash scripts/check-context-budget.sh
 ```
 
-The script should warn only and exit 0.
+The direct command warns and exits 0; `--strict` is reserved for the workspace gate.
 
 ## Do Not Store
 
