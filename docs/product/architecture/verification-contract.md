@@ -117,7 +117,7 @@ A task is done when all of the following hold at once:
 - build, type check, and required analyzers pass;
 - no confirmed `blocker`/`high` findings;
 - the diff stays inside `Change Budget`;
-- at most one reviewer pass has run.
+- the review pass has run, at most once.
 
 After that: `medium` findings go to `docs/backlog/todo/`, `speculative` findings go to `docs/ideas/`, cosmetic remarks are dropped. A further iteration requires new external evidence.
 
