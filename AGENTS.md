@@ -1,6 +1,6 @@
 # [project-name] Workspace — Agent Instructions
 
-`dev/[project-name]/` stores agent context, tasks, and docs. Code lives in separate repos: `app/`, `landing/`, `nginx/`. Search with explicit repo paths because `.gitignore` excludes them; use repo-prefixed task paths such as `app/src/...`.
+`dev/[project-name]/` stores agent context/tasks/docs. Code repos `app/`, `landing/`, and `nginx/` are gitignored; search explicit repo paths and use task paths like `app/src/...`.
 
 ## Local Permissions
 
@@ -25,11 +25,10 @@ When asked to create, draft, or formalize a task:
 1. Read `PROJECT_MAP.md`, `CLAUDE.md`, `docs/folder-rules.md`, and `docs/product/architecture/verification-contract.md`.
 2. Choose `project: app|landing|nginx|workspace|cross`; list `projects` for `cross`. Read affected repo maps/context if present, then only relevant code/docs. Never read secret-like files.
 3. Define outcome, boundaries, invariants, paths, and acceptance behavior. Ask only when missing information materially changes scope; otherwise record assumptions in `Context`.
-4. Create, without overwriting, `docs/backlog/todo/dd-mm-yy-<project>-<slug>.md` using the local date, kebab-case slug, and folder rules.
-5. Add frontmatter: `type: task`, `status: todo`, `project`, ISO `created`; useful `area`, repo-prefixed `related_code`, `related_docs`, and `source.kind`; `projects` for `cross`. Do not invent optional values.
-6. Add todo status and today's last-checked date. Fill every contract section without placeholders. Set numeric file/dependency/abstraction limits, exact executable verification (`<repo>/scripts/verify.sh` or `scripts/verify.sh`), and every example stop condition.
-7. Run both validators and resolve every warning concerning the new file. Do not move it to WIP, implement it, or commit it.
-8. Reply exactly: `Task created: docs/backlog/todo/<filename>`
+4. Run `bash scripts/new-task.sh <project> <slug> [cross-project ...]` for dates/name and mandatory frontmatter without overwrite. Add only useful optional metadata.
+5. Add todo status/last-checked date and fill every contract section without placeholders. Set numeric file/dependency/abstraction limits, exact verification (`<repo>/scripts/verify.sh` or `scripts/verify.sh`), and every example stop condition.
+6. Run both validators and resolve every warning for the new file. Do not start, implement, or commit it.
+7. Reply exactly: `Task created: docs/backlog/todo/<filename>`
 
 <a id="start-task-equivalent"></a>
 
@@ -41,8 +40,9 @@ When the user asks to start a task:
 2. Move it to `docs/wip/`, preserving the full filename, and reply exactly: `Task moved: docs/wip/<filename>`
 3. Read in order: `PROJECT_MAP.md`, `CLAUDE.md`, the WIP task, then affected repo maps/context if present.
 4. Freeze `Non-goals`, `Invariants`, `Change Budget`, and `Verification`; show a 3–7 step plan and wait for confirmation.
-5. Implement the confirmed plan under repo-local `AGENTS.md`; do not expand the frozen contract without a new external fact.
-6. When implementation and required checks finish, say: `Done. You can close the task with /complete-task.`
+5. After confirmation, run `bash scripts/task-branch.sh start <repo> <slug>` for `app|landing|nginx`, once per code repo in `projects` for `cross`, and not for `workspace`; `<slug>` is the filename tail after date/project and before `.md`.
+6. Implement under repo-local `AGENTS.md`; expand the frozen contract only for a new external fact.
+7. When implementation and required checks finish, say: `Done. You can close the task with /complete-task.`
 
 <a id="complete-task-equivalent"></a>
 
@@ -53,11 +53,11 @@ When the user asks to complete a task:
 1. Identify one active task in `docs/wip/`; if unclear, list tasks and ask. Read it and preserve its filename for both done records.
 2. Determine targets: one repo for `app|landing|nginx`, none for `workspace`, or `projects` for `cross`.
 3. Run every command in task `Verification`; also run `scripts/verify.sh` for `workspace` or each `<repo>/scripts/verify.sh` if absent. Record concise evidence as it becomes available. Any failed command blocks closure.
-4. Run one evidence-only review pass against the task contract (`docs/product/architecture/verification-contract.md` → Review policy): check the diff against `Non-goals`, `Invariants`, `Change Budget`, `Verification`, and `Done When`. A finding is admissible only with the violated contract item, the exact file/region, reproducible evidence (failing test, tool output, or reproducible scenario), a minimal fix, and a severity (`blocker`, `high`, `medium`, `speculative`). With no evidenced `blocker`/`high`, record `NO_BLOCKING_FINDINGS` and continue. Otherwise apply only the minimal fixes for admissible `blocker`/`high` findings, re-run the affected `Verification` commands, and do not run a second pass. Route `medium` findings to `docs/backlog/todo/` and `speculative` to `docs/ideas/`; drop cosmetic remarks.
-5. For each code repo, inspect status/diff against `Change Budget`, stage only task-related paths (never `.env`), commit `feat: ...` or `fix: ...`, and record the short hash; with no changes, record the relevant existing commit.
-6. For `workspace`, inspect status/diff/budget and commit all and only task-related implementation paths first, excluding WIP/completion records; record its hash. This separate commit avoids trying to embed a commit's own hash in itself.
-7. Before done records, finalize evidence (command output, diff/path, or commit) for every `Done When` item; missing or unverifiable evidence blocks closure. Create `docs/done/long/<filename>` from the task with a `**Commits:**` list and `## Verification Evidence`; append `[Short summary](../short/<filename>)`. Create `docs/done/short/<filename>` with title, commits, `## What Changed`, evidence summary, `[Full plan](../long/<filename>)`, and `Closes #N` only for an issue.
-8. Delete the WIP original. Run `scripts/build-done-index.py` if present; stage only the two done records, task backlog deletion, generated indexes/maps, and other task-related completion docs. Commit `docs: complete <slug>`.
+4. Run one evidence-only pass per `docs/product/architecture/verification-contract.md` → Review policy against the frozen contract. With no admissible `blocker`/`high`, record `NO_BLOCKING_FINDINGS`; otherwise make only minimal fixes and re-run affected verification, without a second pass. Route `medium` to backlog, `speculative` to ideas, and drop cosmetic remarks.
+5. In each code repo, inspect status/diff/budget, stage only task paths, run `bash scripts/check-staged-paths.sh <repo>`, commit `feat: ...` or `fix: ...`, record its short hash (or a relevant existing commit if unchanged), then run `bash scripts/task-branch.sh finish <repo> <slug>`; it guards and creates the local merge commit, stops on conflict, and deletes the merged branch.
+6. For workspace implementation changes, stage only task paths excluding WIP/completion records, run `bash scripts/check-staged-paths.sh .`, commit, and record its hash. This separate commit avoids a self-referential hash.
+7. Finalize reproducible evidence for every `Done When` item; missing/unverifiable evidence blocks closure. Run `bash scripts/new-done-record.sh docs/wip/<filename> <repo> <hash> "<subject>" [...]`, then check evidenced items, fill `What Changed`/evidence prose, and add `Closes #N` only for an issue.
+8. Delete the WIP original; run `scripts/build-done-index.py` if present. Stage only completion records, backlog deletion, generated indexes/maps, and related completion docs; run `bash scripts/check-staged-paths.sh .`, then commit `docs: complete <slug>`.
 9. Report created/deleted files, verification evidence, review-pass outcome, and all commit hashes.
 
 ## Stop Rule
@@ -71,10 +71,9 @@ Workspace `docs/` is product documentation; rules live in `docs/folder-rules.md`
 ## Workspace Scripts
 
 - `scripts/verify.sh` — strict executable gate for workspace tasks.
-- `scripts/build-done-index.py` — regenerates `docs/done/INDEX.md` in `/complete-task`.
-- `scripts/validate-docs-frontmatter.py`, `scripts/check-task-contract.py`, `scripts/check-context-budget.sh` — warning-only directly; `--strict` is used by the gate.
-- `scripts/build-code-index.py` — builds the `related_code` reverse index.
-- `scripts/check-no-flow-duplication.sh` — rejects task-flow algorithms outside this file.
+- `scripts/new-task.sh`, `scripts/task-branch.sh`, `scripts/check-staged-paths.sh`, `scripts/new-done-record.sh` — deterministic lifecycle mechanics used above.
+- `scripts/build-done-index.py`, `scripts/build-code-index.py` — generated done/code indexes.
+- Validators warn where supported; the gate is strict. `scripts/check-no-flow-duplication.sh` keeps this file canonical.
 
 ## LLM Memory
 
