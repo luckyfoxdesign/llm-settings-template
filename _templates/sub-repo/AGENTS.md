@@ -43,7 +43,7 @@ Scripts may edit only the `generated` block. Long architecture decisions live in
 
 ## Task Lifecycle
 
-Use `/create-task`, `/start-task`, and `/complete-task` through the full algorithms in workspace `../AGENTS.md`.
+Use `/create-task`, `/start-task`, `/review-task`, and `/complete-task` through the full algorithms in workspace `../AGENTS.md`.
 
 ## Architecture Rules
 

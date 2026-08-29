@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Task"
+  short_description: "Review the active task, evidence only"
+  default_prompt: "Use $review-task to review the active task against its contract."

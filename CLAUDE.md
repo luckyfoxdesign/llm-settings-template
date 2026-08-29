@@ -11,7 +11,7 @@ Code repos (`app/`, `landing/`, `nginx/`) are separate git repos and are ignored
 | Workspace map and repo commands | `PROJECT_MAP.md` |
 | Task and docs rules | `docs/folder-rules.md` |
 | Verification contract | `docs/product/architecture/verification-contract.md` |
-| `/create-task`, `/start-task`, `/complete-task` flow | `AGENTS.md` |
+| `/create-task`, `/start-task`, `/review-task`, `/complete-task` flow | `AGENTS.md` |
 | Production deploy / rollback | `docs/runbook-prod.md` |
 | Local development | `docs/runbook-local.md` |
 | App context | `app/CLAUDE.md`, `app/AGENTS.md` |

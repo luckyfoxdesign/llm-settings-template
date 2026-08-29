@@ -52,17 +52,25 @@ When the user asks to complete a task:
 
 1. Identify one active task in `docs/wip/`; if unclear, list tasks and ask. Read it and preserve its filename for both done records.
 2. Determine targets: one repo for `app|landing|nginx`, none for `workspace`, or `projects` for `cross`.
-3. Run every command in task `Verification`; also run `scripts/verify.sh` for `workspace` or each `<repo>/scripts/verify.sh` if absent. Record concise evidence as it becomes available. Any failed command blocks closure.
-4. Run one evidence-only pass per `docs/product/architecture/verification-contract.md` → Review policy against the frozen contract. With no admissible `blocker`/`high`, record `NO_BLOCKING_FINDINGS`; otherwise make only minimal fixes and re-run affected verification, without a second pass. Route `medium` to backlog, `speculative` to ideas, and drop cosmetic remarks.
-5. In each code repo, inspect status/diff/budget, stage only task paths, run `bash scripts/check-staged-paths.sh <repo>`, commit `feat: ...` or `fix: ...`, record its short hash (or a relevant existing commit if unchanged), then run `bash scripts/task-branch.sh finish <repo> <slug>`; it guards and creates the local merge commit, stops on conflict, and deletes the merged branch.
+3. Run every command in task `Verification`; also run `scripts/verify.sh` for `workspace` or each `<repo>/scripts/verify.sh` if absent. Record concise evidence. Any failed command blocks closure.
+4. Run the mandatory review pass per [`/review-task`](#review-task-equivalent); then make only minimal fixes for admissible findings and re-run affected verification.
+5. In each code repo, inspect status/diff/budget, stage only task paths, run `bash scripts/check-staged-paths.sh <repo>`, commit `feat: ...` or `fix: ...`, record its short hash (or a relevant existing commit if unchanged), then run `bash scripts/task-branch.sh finish <repo> <slug>`; it guards, merges locally, stops on conflict, and deletes the branch.
 6. For workspace implementation changes, stage only task paths excluding WIP/completion records, run `bash scripts/check-staged-paths.sh .`, commit, and record its hash. This separate commit avoids a self-referential hash.
 7. Finalize reproducible evidence for every `Done When` item; missing/unverifiable evidence blocks closure. Run `bash scripts/new-done-record.sh docs/wip/<filename> <repo> <hash> "<subject>" [...]`, then check evidenced items, fill `What Changed`/evidence prose, and add `Closes #N` only for an issue.
 8. Delete the WIP original; run `scripts/build-done-index.py` if present. Stage only completion records, backlog deletion, generated indexes/maps, and related completion docs; run `bash scripts/check-staged-paths.sh .`, then commit `docs: complete <slug>`.
 9. Report created/deleted files, verification evidence, review-pass outcome, and all commit hashes.
 
+<a id="review-task-equivalent"></a>
+
+## `/review-task` Equivalent
+
+One evidence-only pass over the active `docs/wip/` task, standalone or as completion step 4.
+
+Follow `docs/product/architecture/verification-contract.md` → Review policy in full: decide whether to intervene as a separate first step; admit only findings carrying all five required parts; judge against the frozen contract, never taste; never rewrite working code or emit a new full version of a file. Without an admissible `blocker`/`high`, reply exactly `NO_BLOCKING_FINDINGS` and change nothing. Route the rest per `docs/folder-rules.md` → Severity Routing. Run once.
+
 ## Stop Rule
 
-A task is done only when every `Done When` item has evidence; tests/build/types/analyzers and applicable gates pass; no confirmed `blocker`/`high` remains; the diff fits `Change Budget`; and the required review pass ran, at most once. A further iteration requires new external evidence. Contract/review/severity rules: `docs/product/architecture/verification-contract.md` and `docs/folder-rules.md`.
+A task is done only when every `Done When` item has evidence; tests/build/types/analyzers and applicable gates pass; no confirmed `blocker`/`high` remains; the diff fits `Change Budget`; and the review pass ran exactly once. Another iteration requires new external evidence.
 
 ## Docs
 
