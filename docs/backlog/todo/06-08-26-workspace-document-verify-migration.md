@@ -39,7 +39,7 @@ This template workspace has no code repos, so the fix is documentation, not migr
 
 ## Invariants
 
-- `AGENTS.md` stays within 180 lines / 7168 bytes; `CLAUDE.md` within 60 lines / 3072 bytes.
+- `AGENTS.md` stays within 180 lines / 8192 bytes; `CLAUDE.md` within 60 lines / 3072 bytes.
 - `AGENTS.md` remains the single source of the task-flow algorithm.
 - Existing workspace scripts stay warning-only and exit 0.
 

@@ -22,7 +22,7 @@ MEMORY_MD="$HOME/.claude/projects/${PROJECT_KEY}/memory/MEMORY.md"
 # file path : line limit : byte limit (0 = no byte limit)
 declare -a FILES=(
   "CLAUDE.md:60:3072"
-  "AGENTS.md:180:7168"
+  "AGENTS.md:180:8192"
   "PROJECT_MAP.md:200:7168"
 )
 

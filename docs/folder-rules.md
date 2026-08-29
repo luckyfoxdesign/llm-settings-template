@@ -270,7 +270,7 @@ Runs on the host (not Docker; `docs/` is not copied into containers), needs only
 | File | Lines | Bytes |
 |---|---:|---:|
 | `CLAUDE.md` | <= 60 | <= 3 KB |
-| `AGENTS.md` | <= 180 | <= 7 KB |
+| `AGENTS.md` | <= 180 | <= 8 KB |
 | `PROJECT_MAP.md` | <= 200 | <= 7 KB |
 | `~/.claude/.../MEMORY.md` | <= 30 | — |
 
