@@ -1,0 +1,81 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Semantic tokens. Source of truth: the site renders from these variables, and
+   scripts/generate-tokens.mjs builds tokens/semantic.generated.json from this
+   same block, so tokens and code cannot drift apart.
+
+   Name links --color-link-default, not --color-link: Tailwind turns every
+   --color-* into a utility, and a text-link utility would land in
+   @layer utilities and override a:visited / a:hover from @layer base.
+
+   Values are literal hex, never var(): the generator copies the raw string into
+   DTCG, and a reference to another variable would break the Figma import.
+   Opacity is not stored here — set it with a modifier in the markup.
+
+   One declaration per line; the generator fails on anything else. Adding or
+   removing a token means updating EXPECTED.semanticTokens in
+   scripts/generate-tokens.mjs, which is what makes tokens:check a real gate. */
+@theme {
+    --color-link-default: #0000ee;
+    --color-link-visited: #551a8b;
+    --color-link-hover: #7700cc;
+
+    /* Below: design source -> nearest Tailwind name -- meaning */
+
+    /* #ffffff -> white -- page background */
+    --color-page: #ffffff;
+    /* #000000 -> black -- body text, navigation */
+    --color-ink: #000000;
+    /* #404040 -> neutral-700 -- headings */
+    --color-ink-heading: #404040;
+    /* #737373 -> neutral-500 -- secondary text, captions */
+    --color-ink-muted: #737373;
+    /* #fafafa -> neutral-50 -- raised surface, cards */
+    --color-surface-raised: #fafafa;
+    /* #e5e5e5 -> neutral-200 -- card and section borders */
+    --color-edge: #e5e5e5;
+}
+
+@layer base {
+    /* 90s-style link colors */
+    a {
+        color: var(--color-link-default);
+        text-decoration: underline;
+    }
+
+    a:visited {
+        color: var(--color-link-visited);
+    }
+
+    a:hover {
+        color: var(--color-link-hover);
+    }
+
+    html,
+    body {
+        overflow-x: hidden;
+    }
+
+    body {
+        font-size: 1.1875rem;
+        line-height: 1.4;
+        @apply antialiased;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-weight: bold;
+    }
+
+    h1 {
+        font-size: 1.7em;
+    }
+    h2 {
+        font-size: 1.25em;
+    }
+}

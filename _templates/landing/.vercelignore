@@ -1,0 +1,18 @@
+.DS_Store
+Thumbs.db
+.env
+.env.*
+node_modules
+dist/
+.astro/
+docker-files/
+compose.yml
+
+# workspace agent scaffolding — not part of the deployed site
+AGENTS.md
+CLAUDE.md
+PROJECT_MAP.md
+/scripts
+
+# Figma dev plugin — reads tokens/, never built by Astro, not part of the site
+/figma-plugin

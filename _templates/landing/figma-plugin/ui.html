@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        font: 12px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        margin: 0;
+        padding: 12px;
+        color: #1a1a1a;
+      }
+      section {
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+      h2 {
+        font-size: 12px;
+        margin: 0 0 8px;
+      }
+      button {
+        font-size: 12px;
+        padding: 4px 10px;
+        margin-left: 6px;
+        cursor: pointer;
+      }
+      pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: #f7f7f7;
+        border-radius: 4px;
+        padding: 8px;
+        max-height: 220px;
+        overflow: auto;
+      }
+      .error {
+        color: #c0392b;
+      }
+    </style>
+  </head>
+  <body>
+    <section>
+      <h2>1. Import Tailwind palette</h2>
+      <input type="file" id="palette-file" accept="application/json" />
+      <button id="palette-btn">Import</button>
+    </section>
+
+    <section>
+      <h2>2. Import semantic tokens</h2>
+      <input type="file" id="semantic-file" accept="application/json" />
+      <button id="semantic-btn">Import</button>
+    </section>
+
+    <section>
+      <h2>3. Export used colors</h2>
+      <button id="export-btn">Export colors.used.json</button>
+    </section>
+
+    <pre id="output">Готово к работе.</pre>
+
+    <script>
+      var output = document.getElementById("output");
+
+      function readFile(inputId, callback) {
+        var input = document.getElementById(inputId);
+        var file = input.files[0];
+        if (!file) {
+          output.textContent = "Файл не выбран.";
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function () {
+          callback(reader.result);
+        };
+        reader.readAsText(file);
+      }
+
+      document.getElementById("palette-btn").onclick = function () {
+        readFile("palette-file", function (json) {
+          parent.postMessage({ pluginMessage: { type: "import-palette", json: json } }, "*");
+        });
+      };
+
+      document.getElementById("semantic-btn").onclick = function () {
+        readFile("semantic-file", function (json) {
+          parent.postMessage({ pluginMessage: { type: "import-semantic", json: json } }, "*");
+        });
+      };
+
+      document.getElementById("export-btn").onclick = function () {
+        parent.postMessage({ pluginMessage: { type: "export-used" } }, "*");
+      };
+
+      function formatImportReport(collection, report) {
+        var lines = ["Импорт: " + collection];
+        lines.push("создано: " + report.created.length + " " + JSON.stringify(report.created));
+        lines.push("обновлено: " + report.updated.length);
+        lines.push("устарело: " + report.stale.length + " " + JSON.stringify(report.stale));
+        if (report.aliased) {
+          lines.push("алиасы: " + report.aliased.length + " " + JSON.stringify(report.aliased));
+        }
+        if (report.literal) {
+          lines.push("литералы (нет в палитре): " + report.literal.length + " " + JSON.stringify(report.literal));
+        }
+        if (report.ambiguous && report.ambiguous.length) {
+          lines.push("неоднозначные значения: " + JSON.stringify(report.ambiguous));
+        }
+        return lines.join("\n");
+      }
+
+      function triggerDownload(fileName, content) {
+        var blob = new Blob([content], { type: "application/json" });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement("a");
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+
+      window.onmessage = function (event) {
+        var msg = event.data.pluginMessage;
+        if (!msg) return;
+
+        if (msg.type === "import-report") {
+          output.className = "";
+          output.textContent = formatImportReport(msg.collection, msg.report);
+        } else if (msg.type === "export-result") {
+          triggerDownload(msg.fileName, msg.content);
+          var unboundText = msg.unbound.length
+            ? msg.unbound
+                .map(function (u) {
+                  return u.kind + " · " + u.nodeName + " (" + u.nodeId + ")";
+                })
+                .join("\n")
+            : "нет";
+          output.className = "";
+          output.textContent =
+            "Выгружено переменных: смотри " + msg.fileName + "\n\nНепривязанные заливки/обводки (не изменены):\n" + unboundText;
+        } else if (msg.type === "error") {
+          output.className = "error";
+          output.textContent = "Ошибка: " + msg.message;
+        }
+      };
+    </script>
+  </body>
+</html>

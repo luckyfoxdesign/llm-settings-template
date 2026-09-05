@@ -1,0 +1,30 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="[project-name]"
+  description="Landing scaffold with the design-token pipeline wired up."
+>
+  <main class="mx-auto max-w-2xl px-6 py-16">
+    <h1 class="text-ink-heading">[project-name]</h1>
+    <p class="mt-2 text-ink-muted">
+      Replace this page. It exists so the build renders real markup and the
+      token utilities below are exercised by every `npm run build`.
+    </p>
+
+    <section class="mt-8 border border-edge bg-surface-raised p-6">
+      <h2>Design tokens</h2>
+      <p class="mt-2 text-ink-muted">
+        Semantic colors live in the <code>@theme</code> block of
+        <code>src/styles/global.css</code>. Run
+        <code>npm run tokens:generate</code> to rebuild
+        <code>tokens/</code>, and <code>npm run tokens:check</code> to fail the
+        build when the generated files drift from that block.
+      </p>
+      <p class="mt-2">
+        <a href="https://tailwindcss.com/docs/theme">Tailwind theme variables</a>
+      </p>
+    </section>
+  </main>
+</BaseLayout>

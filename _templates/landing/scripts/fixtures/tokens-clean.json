@@ -1,0 +1,35 @@
+{
+  "$description": "Фикстура линтера: макет использует только смысловые токены, объявленные в tokens/semantic.generated.json. Ожидаемый код выхода — 0. Схема повторяет tokens/colors.used.json.",
+  "variables": [
+    {
+      "name": "semantic/link-default",
+      "collection": "Semantic",
+      "value": "#0000ee",
+      "aliasOf": null
+    },
+    {
+      "name": "semantic/ink",
+      "collection": "Semantic",
+      "value": "#000000",
+      "aliasOf": "tailwind/black"
+    },
+    {
+      "name": "tailwind/black",
+      "collection": "Tailwind Palette",
+      "value": "#000000",
+      "aliasOf": null
+    },
+    {
+      "name": "semantic/surface-raised",
+      "collection": "Semantic",
+      "value": "#fafafa",
+      "aliasOf": "tailwind/neutral/50"
+    },
+    {
+      "name": "tailwind/neutral/50",
+      "collection": "Tailwind Palette",
+      "value": "#fafafa",
+      "aliasOf": null
+    }
+  ]
+}

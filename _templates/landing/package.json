@@ -1,0 +1,25 @@
+{
+  "name": "landing-template",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "tokens:generate": "node scripts/generate-tokens.mjs",
+    "tokens:check": "node scripts/generate-tokens.mjs --check",
+    "tokens:lint": "node scripts/check-tokens.mjs"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "3.7.0",
+    "@astrojs/vercel": "8.2.8",
+    "@tailwindcss/vite": "4.1.13",
+    "astro": "5.13.10",
+    "tailwindcss": "4.1.13"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "0.5.19"
+  }
+}

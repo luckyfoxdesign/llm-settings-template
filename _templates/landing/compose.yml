@@ -1,0 +1,19 @@
+services:
+  # Development
+  astro-dev:
+    build:
+      context: .
+      dockerfile: docker-files/Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  # Production (nginx + static files)
+  astro-prod:
+    build:
+      context: .
+      dockerfile: docker-files/Dockerfile.prod
+    ports:
+      - "8080:3000"

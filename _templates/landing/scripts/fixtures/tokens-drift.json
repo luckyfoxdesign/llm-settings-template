@@ -1,0 +1,29 @@
+{
+  "$description": "Фикстура линтера: макет ссылается на смысловые токены, которых нет в @theme (переименование или устаревшая выгрузка). Ожидаемый код выхода — ненулевой. Схема повторяет tokens/colors.used.json.",
+  "variables": [
+    {
+      "name": "semantic/ink",
+      "collection": "Semantic",
+      "value": "#000000",
+      "aliasOf": "tailwind/black"
+    },
+    {
+      "name": "tailwind/black",
+      "collection": "Tailwind Palette",
+      "value": "#000000",
+      "aliasOf": null
+    },
+    {
+      "name": "semantic/link",
+      "collection": "Semantic",
+      "value": "#0000ee",
+      "aliasOf": null
+    },
+    {
+      "name": "semantic/ink-strong",
+      "collection": "Semantic",
+      "value": "#111111",
+      "aliasOf": null
+    }
+  ]
+}
