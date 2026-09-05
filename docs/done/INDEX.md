@@ -2,6 +2,7 @@
 # Done index
 
 ## workspace
+- 2026-09-06 · [`_templates/landing/` — Astro + Tailwind sub-repo template with the design-token pipeline](short/05-09-26-workspace-landing-template-tokens.md)
 - 2026-08-26 · [Git Branch Per Task](short/20-08-26-workspace-git-branch-per-task.md)
 - 2026-08-13 · [Give The Workspace Its Own Executable Gate](short/07-08-26-workspace-verify-gate.md)
 - 2026-08-06 · [Wire The Verification Contract Into The Workspace Template](short/04-08-26-workspace-verification-contract.md)
