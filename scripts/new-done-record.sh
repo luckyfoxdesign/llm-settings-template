@@ -38,6 +38,16 @@ if [[ "$TASK_DIR" != "$WORKSPACE_ROOT/docs/wip" ]]; then
   echo "ERROR: task must be directly inside docs/wip" >&2
   exit 1
 fi
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+python3 -B - "$SCRIPT_DIR" "$TASK_PATH" <<'PY'
+import sys
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+from workspace_rules import private_path
+path = Path(sys.argv[2]).absolute()
+if private_path(path) or path.is_symlink() or any(parent.is_symlink() for parent in path.parents):
+    sys.exit('ERROR: refusing private or symlinked WIP path')
+PY
 
 TASK_FILE="$(basename "$TASK_PATH")"
 if [[ ! "$TASK_FILE" =~ ^[0-9]{2}-[0-9]{2}-[0-9]{2}-(app|landing|nginx|workspace|cross)-[a-z0-9]+(-[a-z0-9]+)*\.md$ ]]; then
@@ -138,16 +148,23 @@ write_frontmatter() {
   printf '%s\n' '---'
   for ((i = 1; i < FM_END; i++)); do
     line="${TASK_LINES[$i]}"
-    if [[ "$line" == type:* ]]; then
+    if [[ "$line" == completion_validation:* ]]; then
+      continue
+    elif [[ "$line" == type:* ]]; then
       printf 'type: %s\n' "$record_type"
     elif [[ "$line" == status:* ]]; then
       printf '%s\n' 'status: done'
+    elif [[ "$line" == phase:* ]]; then
+      printf '%s\n' 'phase: completed'
     elif [[ "$short_record" -eq 1 && "$line" == created:* ]]; then
       printf 'created: %s\n' "$TODAY"
     else
       printf '%s\n' "$line"
     fi
   done
+  if [[ "$record_type" == "done_long" ]]; then
+    printf '%s\n' 'completion_validation: required'
+  fi
   printf '%s\n' '---'
 }
 

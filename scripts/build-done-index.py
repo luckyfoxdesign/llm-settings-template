@@ -5,6 +5,7 @@ import re
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+from workspace_rules import extract_frontmatter, markdown_files
 
 DOCS_ROOT = Path(__file__).parent.parent / "docs"
 SHORT_DIR = DOCS_ROOT / "done" / "short"
@@ -16,18 +17,8 @@ PROJECT_ORDER = ["app", "landing", "nginx", "workspace", "cross"]
 DATE_PREFIX_RE = re.compile(r"^(\d{2})-(\d{2})-(\d{2})-(.+)$")
 
 
-def parse_frontmatter(text: str) -> Dict[str, str]:
-    if not text.startswith("---\n"):
-        return {}
-    end = text.find("\n---", 4)
-    if end == -1:
-        return {}
-    fm: Dict[str, str] = {}
-    for line in text[4:end].splitlines():
-        if ":" in line and not line.startswith(" "):
-            key, _, val = line.partition(":")
-            fm[key.strip()] = val.strip().strip("'\"")
-    return fm
+def parse_frontmatter(text):
+    return extract_frontmatter(text) or {}
 
 
 def extract_title(text: str) -> Optional[str]:
@@ -53,7 +44,7 @@ def build_index() -> str:
     groups: Dict[str, List[Tuple[str, str, str]]] = {p: [] for p in PROJECT_ORDER}
     archive: List[Tuple[str, str]] = []
 
-    for md_path in sorted(SHORT_DIR.glob("*.md")):
+    for md_path in sorted(markdown_files(SHORT_DIR)):
         text = md_path.read_text(encoding="utf-8")
         title = extract_title(text) or md_path.stem
         fm = parse_frontmatter(text)

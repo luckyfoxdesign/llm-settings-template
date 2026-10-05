@@ -65,7 +65,7 @@ echo ""
 for entry in "${FILES[@]}"; do
   IFS=':' read -r rel lim_lines lim_bytes <<< "$entry"
   abs="$WORKSPACE_ROOT/$rel"
-  if [[ ! -f "$abs" ]]; then
+  if [[ ! -f "$abs" || -L "$abs" ]]; then
     printf "$(pad "$rel")  ${RED}NOT FOUND${RST}\n"
     WARN=1
     continue
@@ -77,7 +77,7 @@ done
 
 # MEMORY.md — lines-only limit
 MEM_LABEL="~/.claude/.../MEMORY.md"
-if [[ -f "$MEMORY_MD" ]]; then
+if [[ -f "$MEMORY_MD" && ! -L "$MEMORY_MD" ]]; then
   mem_lines=$(wc -l < "$MEMORY_MD")
   mem_bytes=$(wc -c < "$MEMORY_MD")
   print_row "$MEM_LABEL" "$mem_lines" 30 "$mem_bytes" 0

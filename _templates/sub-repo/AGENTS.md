@@ -1,6 +1,6 @@
 # [project-name]-[repo-name] — Agent Instructions
 
-This repo belongs to workspace `dev/[project-name]`. Product docs, backlog, and task flow live in `../docs/`, `../AGENTS.md`, and `../CLAUDE.md`. This file contains only repo-local rules.
+This repo belongs to workspace `dev/[project-name]`. Product docs, backlog, and task flow live in `../docs/`, `../AGENTS.md`, and `../CLAUDE.md`. Before work, explicitly read `../AGENTS.md` and `../CLAUDE.md`; parent workspace discovery is not guaranteed across Git roots. This file contains repo-local rules.
 
 ## Source Of Truth
 
@@ -43,7 +43,7 @@ Scripts may edit only the `generated` block. Long architecture decisions live in
 
 ## Task Lifecycle
 
-Use `/create-task`, `/start-task`, `/review-task`, and `/complete-task` through the full algorithms in workspace `../AGENTS.md`.
+Use `/create-task`, `/start-task`, `/review-task`, and `/complete-task` through the procedures in workspace `../docs/workflows/task-lifecycle.md`.
 
 ## Architecture Rules
 
@@ -78,7 +78,7 @@ Default fuse for a task in this repo, unless the task file sets its own:
 
 - at most 5 production files;
 - no new dependencies;
-- no new abstraction layers without a test that requires them.
+- new abstractions only when needed by the task, within its explicit budget.
 
 Fix the budget before implementation, not after.
 
@@ -87,7 +87,7 @@ Fix the budget before implementation, not after.
 Use current stable dependency versions. When adding or updating a dependency:
 
 1. Check the current version on the official registry.
-2. Set the lower bound to the current version, e.g. `>=X.Y.Z`.
+2. Use the ecosystem's compatible version range or an exact pin and commit its lockfile when supported; do not use an unbounded `>=` range.
 3. Check compatibility between framework/plugins/ORM/adapters.
 4. For major upgrades, review breaking changes first.
 

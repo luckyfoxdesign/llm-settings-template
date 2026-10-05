@@ -18,7 +18,7 @@ This workspace repo is not deployed. It exists to organize context, tasks, docs,
 
 A task ends when **external, executable checks pass** — not when a model judges its own work good enough.
 
-Models propose changes. The stop criteria live outside the model: a task contract frozen before implementation, deterministic gates (`scripts/verify.sh`), a bounded diff, and at most one evidence-only review pass. Chaining more models adds opinion, not proof.
+Models propose changes. The stop criteria live outside the model: a task contract frozen before implementation, deterministic gates (`scripts/verify.sh`), a bounded diff, and one evidence-only review per implementation snapshot. Chaining more models adds opinion, not proof.
 
 The reasoning, evidence, and rejected alternatives are in `docs/product/architecture/verification-contract.md`.
 
@@ -29,9 +29,10 @@ The task lifecycle is written once and consumed by any agent:
 - `.agents/skills/` — shared, model-neutral skill definitions.
 - `.claude/skills/` — symlinks into `.agents/skills/`.
 - `.claude/commands/` — Claude Code slash-command adapters.
-- `AGENTS.md` — the same algorithms in prose, for agents without skill support.
+- `AGENTS.md` — shared constraints and workflow links for every agent.
+- `docs/workflows/task-lifecycle.md` — canonical procedures, loaded for the requested action.
 
-`scripts/check-no-flow-duplication.sh` keeps `AGENTS.md` the single canonical copy.
+`scripts/check-no-flow-duplication.sh` checks workflow ownership in known instruction files, without scanning code repos or private paths.
 
 ## Start Here
 
@@ -51,7 +52,7 @@ bash scripts/init-workspace.sh
 cp -r _templates/sub-repo/. app/
 ```
 
-5. Fill each repo's `AGENTS.md`, `CLAUDE.md`, `PROJECT_MAP.md`, `scripts/update-project-map.sh`, and `scripts/verify.sh`.
+5. Run `bash scripts/link-workspace-skills.sh <repo>` for each code repo, then fill each repo's `AGENTS.md`, `CLAUDE.md`, `PROJECT_MAP.md`, `scripts/update-project-map.sh`, and `scripts/verify.sh`.
 6. Keep workspace `PROJECT_MAP.md` as an aggregator only. Repo internals belong in `<repo>/PROJECT_MAP.md`.
 
 The template ships `<repo>/scripts/verify.sh` as a TODO stub that **fails until you fill it in**. That is deliberate: a repo with no real gate should not be able to close tasks.
@@ -67,7 +68,7 @@ For humans:
 
 For coding agents:
 
-- `AGENTS.md` — required behavior, permissions, and the complete task lifecycle commands.
+- `AGENTS.md` — required behavior, permissions, and links to task lifecycle procedures.
 - `CLAUDE.md` — compact workspace context.
 - `<repo>/AGENTS.md` and `<repo>/CLAUDE.md` — repo-local rules.
 - `<repo>/PROJECT_MAP.md` — repo-local structure map.
@@ -97,14 +98,14 @@ Use:
 
 - `/create-task` to turn a request or idea into a ready task with a complete, frozen contract.
 - `/start-task` to move a task into WIP, read context, plan, and open a task branch per code repo.
-- `/review-task` to run the evidence-only pass on demand. `/complete-task` runs the same pass anyway, so this is for checking early, not an extra round.
+- `/review-task` to run the evidence-only pass on demand. `/complete-task` reuses it when the implementation snapshot is unchanged.
 - `/complete-task` to run the gates, review, commit, merge the task branch, write done docs, and close the task.
 
-Each step is backed by a script so the mechanics are deterministic rather than re-derived by the model: `new-task.sh` for frontmatter, `task-branch.sh` for branch start/finish, `check-staged-paths.sh` for staging discipline, `new-done-record.sh` for done records.
+Each step is backed by a script so the mechanics are deterministic rather than re-derived by the model: `new-task.sh` for frontmatter, `task-branch.sh` for branch start/finish, `check-staged-paths.sh` for staging discipline, `new-done-record.sh` for done scaffolds.
 
 `/complete-task` is fail-closed: it blocks on any failed verification command, any unchecked `Done When` item, and any confirmed `blocker`/`high` finding.
 
-The full algorithms are in `AGENTS.md`.
+The full algorithms are in `docs/workflows/task-lifecycle.md`.
 
 ## Verification
 
@@ -112,7 +113,7 @@ Three layers, each owned by exactly one place, nothing duplicated:
 
 | Layer | Owner | Contents |
 |---|---|---|
-| Protocol | `AGENTS.md` + `verification-contract.md` | Contract shape, review policy, stop rule, severity routing |
+| Protocol | `docs/workflows/task-lifecycle.md` + `verification-contract.md` | Contract shape, review policy, stop rule, severity routing |
 | Gates | `scripts/verify.sh`, `<repo>/scripts/verify.sh` | Concrete pass/fail commands |
 | Contract | The task file in `docs/wip/` | Per-task goal, non-goals, invariants, budget, verification |
 
@@ -123,7 +124,7 @@ bash <repo>/scripts/verify.sh    # code repos — runs in Docker
 bash scripts/verify.sh           # workspace tasks — runs workspace validators, strict
 ```
 
-A single exit code matters more than any prose rule: prose can be reinterpreted, an exit code cannot.
+The gate is reproducible, but its exit code proves only the checks it actually performs. Task-specific acceptance and review evidence remain required.
 
 After the review pass, non-blocking findings leave the current task rather than expanding it:
 
@@ -164,28 +165,30 @@ Host-side helpers in `scripts/` (run on the host, not in Docker).
 
 Gate — strict, non-zero exit on the first violation:
 
-- `verify.sh` — the executable gate for workspace tasks. Runs the four validators below in strict mode.
+- `verify.sh` — the executable gate for workspace tasks. Runs strict validators and workflow regression tests.
 
 Lifecycle mechanics — deterministic steps used by the task commands:
 
 - `new-task.sh` — create a task file with dates and mandatory frontmatter, never overwriting.
 - `task-branch.sh` — `start` / `finish` a per-repo task branch; guards, merges locally, deletes the merged branch, stops on conflict.
-- `check-staged-paths.sh` — block a commit that stages paths outside the task.
-- `new-done-record.sh` — generate the long and short done records from the WIP task.
+- `check-staged-paths.sh` — enforce task paths and file budgets with `--task` (plus `--base main` for code repos); merge checks derive allowed paths from the task diff.
+- `new-done-record.sh` — generate unfinished long and short done scaffolds from WIP; validate filled records before closure.
 
-Validators — warning-only standalone, strict under `verify.sh`:
+Validators — document/budget checks warn standalone; ownership checks always fail on a violation:
 
 - `check-context-budget.sh` — flag hot-context files over their budgets.
-- `check-no-flow-duplication.sh` — keep the task-flow algorithm only in `AGENTS.md`.
+- `check-no-flow-duplication.sh` — check workflow ownership only in known instruction files.
 - `validate-docs-frontmatter.py` — flag docs with missing or invalid frontmatter.
-- `check-task-contract.py` — flag tasks with an incomplete contract.
+- `check-task-contract.py` — reject incomplete task contracts; new done scaffolds remain blocked until acceptance evidence and existing project commits are recorded.
 
 Setup and generated indexes:
 
 - `init-workspace.sh` — create the docs folder structure (run once after cloning).
+- `link-workspace-skills.sh` — add shared skill links to independent code repos, preserving existing files.
+- `test-workflow.py` — run behavioral regressions in disposable repositories.
 - `build-done-index.py` — regenerate `docs/done/INDEX.md` from done summaries.
 - `build-code-index.py` — build `docs/code-index.md` from `related_code` frontmatter.
-- `update-project-map.sh` — refresh generated blocks in `PROJECT_MAP.md`.
+- `update-project-map.sh` — project-specific TODO stub for refreshing generated blocks in `PROJECT_MAP.md`.
 
 ## Safety Defaults
 
@@ -202,3 +205,5 @@ See `AGENTS.md` → Security for the exact policy.
 ## License
 
 MIT — see `LICENSE`.
+
+Workspace checks are read-only. Regenerate code/done indexes explicitly during completion. Frontmatter supports plain or quoted scalars, block lists, inline scalar lists, and nested mappings; unsupported YAML is rejected.

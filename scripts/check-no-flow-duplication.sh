@@ -1,74 +1,44 @@
 #!/usr/bin/env bash
-# Ensures each canonical algorithm and policy is stated in exactly one file.
-# Detects verbatim restatements outside the owning file.
-#
-# Rule format: "<owner path>::<regex>". A match inside the owner is expected;
-# a match anywhere else is duplication and must become a pointer instead.
-#
-# Every rule is also checked against its own owner. A pattern that no longer
-# matches there is reported as STALE and fails the run: rules anchored to
-# rewritten wording would otherwise keep passing while guarding nothing.
-#
-# docs/done/ is excluded: done records are historical evidence and must never
-# be rewritten to satisfy this gate. docs/wip/ is local and gitignored.
-set -uo pipefail
+# Check canonical workflow ownership only in known instruction locations.
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+python3 -B - <<'PY'
+import re
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path('scripts').resolve()))
+from workspace_rules import markdown_files, private_path
 
-cd "$(dirname "$0")/.." || exit 1
-
-RULES=(
-  # Task-flow algorithm — owned by AGENTS.md
-  "AGENTS.md::bash scripts/new-task.sh"
-  "AGENTS.md::Reply exactly: .Task created"
-  "AGENTS.md::Move it to .docs/wip/., preserving the full filename"
-  "AGENTS.md::reply exactly: .Task moved"
-  "AGENTS.md::Identify one active task in .docs/wip/"
-  "AGENTS.md::bash scripts/task-branch.sh"
-  "AGENTS.md::bash scripts/check-staged-paths.sh"
-  "AGENTS.md::bash scripts/new-done-record.sh"
-  # Review policy — owned by the verification contract
-  "docs/product/architecture/verification-contract.md::the violated contract item"
-  "docs/product/architecture/verification-contract.md::a reproducible scenario, failing test, or tool output"
-  "docs/product/architecture/verification-contract.md::severity: .blocker., .high., .medium., or .speculative"
-)
-
-FOUND=0
-STALE=0
-
-for rule in "${RULES[@]}"; do
-  owner="${rule%%::*}"
-  pattern="${rule#*::}"
-
-  if ! grep -q -E "$pattern" "$owner" 2>/dev/null; then
-    echo "STALE RULE: pattern no longer matches its owner $owner"
-    echo "  $pattern"
-    STALE=1
-    continue
-  fi
-
-  while IFS= read -r line; do
-    file="${line%%:*}"
-    file="${file#./}"
-    if [[ "$file" != "$owner" ]]; then
-      echo "DUPLICATE: $file restates content owned by $owner"
-      echo "  ${line#*:}"
-      FOUND=1
-    fi
-  done < <(grep -rn --include="*.md" -E "$pattern" . \
-    --exclude-dir=wip --exclude-dir=done --exclude-dir=.git 2>/dev/null)
-done
-
-if [[ $STALE -eq 1 ]]; then
-  echo
-  echo "Re-anchor stale rules to the owner's current wording, or drop them."
-fi
-
-if [[ $FOUND -eq 1 ]]; then
-  echo
-  echo "Duplication detected. Keep the text in its owner and leave a pointer here."
-fi
-
-if [[ $STALE -eq 1 || $FOUND -eq 1 ]]; then
-  exit 1
-fi
-
-echo "OK: ${#RULES[@]} rules live, no duplication outside canonical owners"
+owner = Path('docs/workflows/task-lifecycle.md')
+if owner.is_symlink() or any(p.is_symlink() for p in owner.parents) or not owner.is_file():
+    sys.exit('FAIL: missing regular canonical workflow file')
+canonical = owner.read_text()
+names = ('create', 'start', 'review', 'complete')
+for name in names:
+    if f'id="{name}-task-equivalent"' not in canonical:
+        sys.exit('FAIL: missing workflow anchor for ' + name)
+steps = {line.strip() for line in canonical.splitlines()
+         if re.match(r'^\d+\. ', line) and len(line) > 100}
+paths = [Path('AGENTS.md'), Path('CLAUDE.md')]
+for folder in ('.agents/skills', '.claude/commands'):
+    paths.extend(markdown_files(folder))
+for template in ('sub-repo', 'landing'):
+    paths.extend(Path('_templates') / template / name for name in ('AGENTS.md', 'CLAUDE.md'))
+    paths.extend(markdown_files(Path('_templates') / template / '.claude/commands'))
+failed = False
+for path in paths:
+    if private_path(path) or path.is_symlink() or any(p.is_symlink() for p in path.parents):
+        continue
+    if not path.is_file():
+        print('FAIL: missing instruction file', path)
+        failed = True
+        continue
+    text = path.read_text()
+    repeated = sum(line.strip() in steps for line in text.splitlines())
+    if repeated >= 2 or re.search(r'^## `/\w+-task` Equivalent$', text, re.M):
+        print('FAIL: lifecycle procedure duplicated in', path)
+        failed = True
+print('Workflow ownership: ' + ('FAIL' if failed else 'OK (instruction files only)'))
+sys.exit(1 if failed else 0)
+PY

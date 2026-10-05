@@ -2,6 +2,9 @@
 
 # Code → Tasks Index
 
+> **Partial coverage** — only 1/6 tasks (17%) have a `related_code` field.
+> Fill `related_code` in task frontmatter so this index is complete.
+
 ### app/src/...
 - todo · 00-00-00-app-example-task — «Example Task»
 

@@ -16,7 +16,7 @@ related_docs:
 
 A task ends when **external, executable checks pass** — not when a model judges the code good enough.
 
-Models propose changes. The stop criteria live outside the model: a frozen task contract, deterministic gates, a bounded diff, and at most one evidence-only review pass.
+Models propose changes. The stop criteria live outside the model: a frozen task contract, deterministic gates, a bounded diff, and one evidence-only review per implementation snapshot.
 
 ```text
 frozen task contract
@@ -54,8 +54,8 @@ Three layers, each owned by exactly one place. Nothing is duplicated across repo
 
 | Layer | Owner | Contents |
 |---|---|---|
-| Protocol | Workspace `AGENTS.md` + this file | Contract shape, review policy, stop rule, severity routing |
-| Gates | `scripts/verify.sh` and `<repo>/scripts/verify.sh` | Concrete pass/fail commands and change budgets |
+| Protocol | `docs/workflows/task-lifecycle.md` + this file | Contract shape, review policy, stop rule, severity routing |
+| Gates | `scripts/verify.sh` and `<repo>/scripts/verify.sh` | Concrete pass/fail commands; file budgets are checked against the task diff |
 | Contract | The task file in `docs/wip/` | Per-task goal, non-goals, invariants, budget, verification |
 
 The protocol is universal and written once. Code gates are repo-specific because only `app/`, `landing/`, and `nginx/` know their test, lint, type-check, and build commands. Workspace tasks use root `scripts/verify.sh`, which runs workspace validators in strict mode instead of Docker.
@@ -68,11 +68,9 @@ Each repo exposes one entrypoint:
 <repo>/scripts/verify.sh
 ```
 
-It runs that repo's gates in order and exits non-zero on the first failure. This matters more than any prose rule: while gates are described in text, a model can reinterpret them; as a single exit code, it cannot. The script is listed in the repo `PROJECT_MAP.md` `Commands` block.
+It runs configured repo gates in order and exits non-zero on the first failure. A passing exit code proves those checks, not all task requirements; acceptance criteria, bounded diffs, and review evidence are still required. The script is listed in the repo `PROJECT_MAP.md` `Commands` block.
 
-The workspace exposes the same contract at `scripts/verify.sh`. Its component
-scripts stay warning-only for exploratory use; the wrapper opts into strict
-exit codes and stops on the first violation.
+The workspace exposes the same contract at `scripts/verify.sh`. Document and context-budget checks warn by default; ownership checks always fail on violations. The wrapper opts into strict document checks and stops on the first failure.
 
 ### Task contract
 
@@ -84,7 +82,8 @@ Frozen before implementation, changed only on new external fact — a contradict
 | `Context` | Origin, known facts, constraints |
 | `Non-goals` | What must not change — public API, adjacent components, general refactors |
 | `Invariants` | What must still hold — existing clients, storage format, no secrets in logs |
-| `Change Budget` | Max production files, no new dependencies, no new abstraction layers without a test that requires them |
+| `Change Budget` | Numeric file limit, explicit dependency limits, and abstraction limits sized to the task |
+| `Task Paths` | Approved workspace-relative implementation paths |
 | `Verification` | The exact commands that produce the pass/fail signal |
 | `Done When` | The stop conditions below |
 
@@ -96,7 +95,7 @@ evidence are both failures; prose confidence is not evidence.
 
 ### Review policy
 
-One review pass, against the contract only. A finding is admissible only if it carries:
+Review each implementation snapshot once, against the contract only. Reuse a recorded review when commit/diff identity is unchanged; changed behavior or external evidence permits a focused follow-up. Standalone review records evidence and findings without editing implementation code. A finding is admissible only if it carries:
 
 1. the violated contract item;
 2. the exact file and code region;
@@ -104,7 +103,7 @@ One review pass, against the contract only. A finding is admissible only if it c
 4. a minimal fix;
 5. severity: `blocker`, `high`, `medium`, or `speculative`.
 
-"I would do it differently", "may be needed later", and "the architecture could be improved" are not defects. With no evidenced `blocker`/`high`, the reviewer answers `NO_BLOCKING_FINDINGS` and changes nothing.
+"I would do it differently", "may be needed later", and "the architecture could be improved" are not defects. With no evidenced `blocker`/`high`, the reviewer reports `NO_BLOCKING_FINDINGS`, followed by any non-blocking findings and the snapshot identity. Recording review evidence and routing findings is allowed; implementation code remains unchanged.
 
 The reviewer decides **whether to intervene** as a separate step before deciding what to change. In the cross-model study, harmful reviews clustered where the reviewer was obliged to emit a new final program and therefore rewrote already-correct code.
 
@@ -117,9 +116,9 @@ A task is done when all of the following hold at once:
 - build, type check, and required analyzers pass;
 - no confirmed `blocker`/`high` findings;
 - the diff stays inside `Change Budget`;
-- the review pass has run, at most once.
+- the final implementation snapshot has a recorded review; an unchanged snapshot was not reviewed repeatedly.
 
-After that: `medium` findings go to `docs/backlog/todo/`, `speculative` findings go to `docs/ideas/`, cosmetic remarks are dropped. A further iteration requires new external evidence.
+After that: `medium` findings go to `docs/backlog/todo/`, `speculative` findings go to `docs/ideas/`, cosmetic remarks are dropped. A changed implementation, merge base, or requirement is new evidence; recheck only affected behavior.
 
 ## Rejected Alternatives
 

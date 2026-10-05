@@ -26,22 +26,22 @@ Close the gap between `AGENTS.md`, which requires `<repo>/scripts/verify.sh` unc
 Routed here as a `medium` finding from the single review pass on
 `04-08-26-workspace-verification-contract.md` (see `docs/done/long/`).
 
-`_templates/sub-repo/scripts/verify.sh` ships with every **new** repo, but `AGENTS.md` `/complete-task` step 5 names the script for **every** repo. In a workspace instantiated from this template, `app/`, `landing/`, and `nginx/` may already exist without it. Nothing currently tells the operator to add it, so the gate silently degrades into prose an agent can reinterpret — the exact failure the architecture doc warns about.
+`_templates/sub-repo/scripts/verify.sh` ships with every **new** repo, but `docs/workflows/task-lifecycle.md` `/complete-task` verification names the script for **every** repo. In a workspace instantiated from this template, `app/`, `landing/`, and `nginx/` may already exist without it. Nothing currently tells the operator to add it, so the gate silently degrades into prose an agent can reinterpret — the exact failure the architecture doc warns about.
 
-This template workspace has no code repos, so the fix is documentation, not migration.
+This template workspace has no code repos, so the fix is documentation, not migration. On 2026-10-05 the workflow owner and mandatory gate were updated after the workspace rules audit; no implementation work on this backlog task has started.
 
 ## Non-goals
 
 - Do not add `verify.sh` to any code repo from here; those repos do not exist in this workspace.
 - Do not change `_templates/sub-repo/scripts/verify.sh` — it is already correct for new repos.
-- Do not weaken the unconditional wording in `AGENTS.md` step 5.
+- Do not weaken the unconditional wording in the canonical completion verification procedure.
 - Do not add a migration script.
 
 ## Invariants
 
 - `AGENTS.md` stays within 180 lines / 8192 bytes; `CLAUDE.md` within 60 lines / 3072 bytes.
-- `AGENTS.md` remains the single source of the task-flow algorithm.
-- Existing workspace scripts stay warning-only and exit 0.
+- `docs/workflows/task-lifecycle.md` remains the single source of task procedures; `AGENTS.md` routes to it.
+- Standalone validators remain warning-only by default; the workspace gate uses strict checks.
 
 ## Change Budget
 
@@ -52,11 +52,13 @@ This template workspace has no code repos, so the fix is documentation, not migr
 ## Verification
 
 ```bash
-bash scripts/check-context-budget.sh
-bash scripts/check-no-flow-duplication.sh
-python3 scripts/validate-docs-frontmatter.py
-python3 scripts/check-task-contract.py
+bash scripts/verify.sh
 ```
+
+## Task Paths
+
+- `README.md`
+- `docs/folder-rules.md`
 
 ## Implementation Steps
 
@@ -69,7 +71,7 @@ python3 scripts/check-task-contract.py
 - [ ] The verification commands pass with no new warnings.
 - [ ] A reader adopting the template knows what to do about pre-existing repos.
 - [ ] The diff stays within `Change Budget`.
-- [ ] At most one reviewer pass has run.
+- [ ] The final implementation snapshot has recorded review evidence.
 
 ## Related
 

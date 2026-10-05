@@ -17,7 +17,9 @@ run_gate() {
 
 run_gate context-budget bash scripts/check-context-budget.sh --strict
 run_gate flow-duplication bash scripts/check-no-flow-duplication.sh
-run_gate docs-frontmatter python3 scripts/validate-docs-frontmatter.py --strict
-run_gate task-contract python3 scripts/check-task-contract.py --strict
+run_gate docs-frontmatter python3 -B scripts/validate-docs-frontmatter.py --strict
+run_gate task-contract python3 -B scripts/check-task-contract.py --strict
+
+run_gate workflow-regressions python3 -B scripts/test-workflow.py
 
 echo "OK: all workspace gates passed"

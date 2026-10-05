@@ -19,11 +19,12 @@ Top-level map for the `[project-name]` workspace.
 ```text
 dev/[project-name]/
 ├── AGENTS.md, CLAUDE.md, PROJECT_MAP.md
-├── docs/                     # product docs; docs/wip is gitignored
-├── scripts/                  # workspace scripts, including update-project-map.sh
+├── docs/                     # product docs and workflows; docs/wip is gitignored
+├── scripts/                  # lifecycle, gates, regression tests, skill linking
 ├── .agents/skills/           # shared, model-neutral workspace skills
 ├── .claude/skills/           # Claude links to shared skills
 ├── .claude/commands/         # Claude command adapters
+├── _templates/landing/       # static landing template
 ├── _templates/sub-repo/      # template for new code repos
 ├── app/PROJECT_MAP.md        # app repo, has its own update-project-map.sh
 ├── landing/PROJECT_MAP.md    # landing repo, has its own update-project-map.sh
@@ -38,7 +39,7 @@ After `git init <repo-name>`, copy the template:
 cp -r _templates/sub-repo/. <repo-name>/
 ```
 
-Then replace `[project-name]` and `[repo-name]`, fill `CLAUDE.md`, `AGENTS.md`, `PROJECT_MAP.md`, and implement or stub `<repo>/scripts/update-project-map.sh`.
+Run `bash scripts/link-workspace-skills.sh <repo-name>` to expose shared skills inside the independent Git repo. Then replace `[project-name]` and `[repo-name]`, fill `CLAUDE.md`, `AGENTS.md`, `PROJECT_MAP.md`, and implement or stub `<repo>/scripts/update-project-map.sh`.
 
 ## Repos
 

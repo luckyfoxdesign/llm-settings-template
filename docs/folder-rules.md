@@ -16,6 +16,7 @@ docs/
 ├── done/
 │   ├── long/             # full completed task records
 │   └── short/            # concise completion summaries
+├── workflows/            # canonical task procedures, loaded on demand
 ├── product/
 │   ├── architecture/     # stable architecture decisions
 │   └── vision/           # product vision
@@ -49,8 +50,7 @@ Every code repo must include:
 `scripts/verify.sh` is the repo's single executable gate: it runs lint, test, type check, and build in order and exits non-zero on the first failure. A task in that repo stops on this exit code. New repos get it from `_templates/sub-repo/` with TODO stubs that fail until filled in.
 
 Workspace tasks use root `scripts/verify.sh`. It invokes the workspace checks in
-strict mode and exits non-zero on the first violation. The individual checks
-remain warning-only when called without `--strict`.
+strict mode and exits non-zero on the first violation. The document and context-budget checks remain warning-only without `--strict`; workflow ownership checks always fail on a violation.
 
 Repo-local `PROJECT_MAP.md` is the source of truth for repo structure: entrypoints, key directories, configs, Docker services, package scripts, API/routes/jobs/models when relevant.
 
@@ -111,12 +111,13 @@ Every task file in `docs/backlog/todo/` and `docs/wip/` carries these sections. 
 | `Non-goals` | What must not change |
 | `Invariants` | What must still hold |
 | `Change Budget` | Max production files, dependency and abstraction limits |
+| `Task Paths` | Approved workspace-relative implementation paths |
 | `Verification` | The exact commands that produce the pass/fail signal |
 | `Done When` | Stop conditions |
 
-`Implementation Steps` and `Related` are conventional but not part of the contract.
+`Task Paths` is required and lists approved workspace-relative paths (directories end in `/`); use it when committing implementation changes. `Implementation Steps` and `Related` are conventional but not part of the contract.
 
-`Non-goals`, `Invariants`, `Change Budget`, and `Verification` are frozen before implementation and changed only on a new external fact: a contradicting test, a user requirement, API documentation, a production incident, or a confirmed architectural constraint.
+`Non-goals`, `Invariants`, `Change Budget`, `Verification`, and `Task Paths` are frozen before implementation and changed only on a new external fact: a contradicting test, a user requirement, API documentation, a production incident, or a confirmed architectural constraint.
 
 For `project: app|landing|nginx`, `Verification` includes `bash <repo>/scripts/verify.sh`. For `project: workspace`, it includes `bash scripts/verify.sh`. Add narrower acceptance commands when the standard gate does not prove the requested behavior.
 
@@ -126,7 +127,9 @@ Check:
 python3 scripts/check-task-contract.py
 ```
 
-Warning-only, always exits 0. Files carrying `TEMPLATE-EXAMPLE` inside an HTML comment are skipped.
+Warning-only by default; `--strict` fails on missing or empty sections, incomplete budgets, missing repo gates, or missing acceptance checkboxes. Only the named `00-00-00-app-example-task.md` scaffold carrying `TEMPLATE-EXAMPLE` inside an HTML comment is skipped.
+
+The staged-path guard accepts `--task <task-file>` to enforce approved paths and the numeric file limit. For code repos, add `--base main` to include already committed task changes. File budgets count changed task files; for cross tasks, check the aggregate across repos before closure. Completion documentation is staged separately with explicit `--allow <path>` arguments. Dependency and abstraction limits still require inspection; structural validators do not prove their semantics.
 
 ### Severity Routing
 
@@ -140,6 +143,8 @@ After a review pass, findings that are not blocking go to their folder rather th
 | cosmetic | dropped |
 
 ## Task Lifecycle
+
+Canonical command procedures and interrupted-step recovery: `docs/workflows/task-lifecycle.md`.
 
 1. Create ready tasks in `docs/backlog/todo/`.
 2. Create bug reports in `docs/backlog/bugs/`.
@@ -155,7 +160,7 @@ After a review pass, findings that are not blocking go to their folder rather th
 
 Completion is fail-closed: run every command in `Verification` and the
 applicable gate, then record evidence for every `Done When` item. Failed,
-missing, or unverifiable evidence blocks done records and commits.
+missing, or unverifiable evidence blocks closure. Done generators create scaffolds; `check-task-contract.py --complete <long-record>` validates filled acceptance evidence before WIP deletion.
 
 ## Done Commit Block
 
@@ -188,6 +193,8 @@ Closes #N
 Remove `Closes #N` when there is no GitHub issue.
 
 ## Frontmatter
+
+Supported YAML subset: plain/quoted scalars, block and inline scalar lists, and nested mappings. Anchors, tags, flow mappings, and multiline scalars are rejected. `projects` must be a list of unique valid projects, not a string.
 
 All new docs files, except technical references like `folder-rules.md`, should start with YAML frontmatter.
 
@@ -241,6 +248,7 @@ Allowed `project`: `app`, `landing`, `nginx`, `workspace`, `cross`.
 Optional fields:
 
 - `created`: `YYYY-MM-DD`
+- `phase`: `awaiting-plan`, `implementing`, `verified`, `reviewed`, `merged`, or `completed`
 - `area`: topic list
 - `related_code`: repo-prefixed code paths, e.g. `app/src/...`. Recommended: `scripts/build-code-index.py` builds a reverse `code -> tasks` index (`docs/code-index.md`) from this field.
 - `related_docs`: docs paths
@@ -251,7 +259,7 @@ Rules:
 - Frontmatter complements folder structure; it does not replace it.
 - `priority` is not used.
 - Do not store secrets, env values, or temporary debug notes.
-- Existing archived `done/` files without frontmatter do not need forced migration.
+- Existing archived `done/` files without frontmatter do not need forced migration. New generated long records carry `completion_validation: required`, so the workspace gate checks them automatically. New completion records require checked acceptance items with `Evidence:` references; historical records are not retroactively subjected to completion-evidence validation.
 
 Validate:
 
@@ -259,7 +267,7 @@ Validate:
 python3 scripts/validate-docs-frontmatter.py
 ```
 
-Runs on the host (not Docker; `docs/` is not copied into containers), needs only system Python 3.9+, and exits 0 by default. Root `scripts/verify.sh` uses `--strict` so reported violations block workspace completion.
+Runs on the host (not Docker; `docs/` is not copied into containers), needs only system Python 3.9+, and exits 0 by default. Validation does not regenerate indexes. Run `python3 scripts/build-code-index.py` explicitly. Root `scripts/verify.sh` uses `--strict` so reported violations block workspace completion.
 
 ## Done Index
 

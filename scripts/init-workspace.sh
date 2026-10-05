@@ -12,6 +12,7 @@ dirs=(
   docs/done/long
   docs/done/short
   docs/ideas
+  docs/workflows
   docs/product/vision
   docs/product/architecture
   scripts

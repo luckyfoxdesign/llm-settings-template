@@ -5,6 +5,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+from workspace_rules import extract_frontmatter, markdown_files
 
 WORKSPACE_ROOT = Path(__file__).parent.parent
 DOCS_ROOT = WORKSPACE_ROOT / "docs"
@@ -33,32 +34,6 @@ STATUS_FROM_PATH = {
 }
 
 
-def extract_frontmatter(text: str) -> Optional[Dict]:
-    if not text.startswith("---\n"):
-        return None
-    end = text.find("\n---", 4)
-    if end == -1:
-        return None
-    fm: Dict = {}
-    current_list: Optional[str] = None
-    for line in text[4:end].splitlines():
-        if line.startswith("  - ") and current_list is not None:
-            fm[current_list].append(line[4:].strip())
-        elif ":" in line and not line.startswith(" "):
-            key, _, val = line.partition(":")
-            key = key.strip()
-            val = val.strip()
-            if val in ("", "[]"):
-                fm[key] = []
-                current_list = key if val == "" else None
-            else:
-                fm[key] = val.strip("'\"")
-                current_list = None
-        else:
-            current_list = None
-    return fm
-
-
 def extract_title(text: str) -> str:
     for line in text.splitlines():
         if line.startswith("# "):
@@ -85,7 +60,7 @@ def build_index() -> Tuple[Dict[str, List[Entry]], int, int]:
     for scan_dir in SCAN_DIRS:
         if not scan_dir.exists():
             continue
-        for md in sorted(scan_dir.rglob("*.md")):
+        for md in sorted(markdown_files(scan_dir)):
             if md.name in SKIP_NAMES:
                 continue
             text = md.read_text(encoding="utf-8")
@@ -94,7 +69,7 @@ def build_index() -> Tuple[Dict[str, List[Entry]], int, int]:
                 continue
 
             doc_type = fm.get("type", "")
-            if doc_type not in ("task", "bug"):
+            if doc_type not in ("task", "bug", "done_long"):
                 continue
 
             total += 1

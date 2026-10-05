@@ -1,5 +1,6 @@
 # Code repos (отдельные git-репозитории внутри workspace)
 /app/
+/landing/
 /nginx/
 
 # Локальная активная работа

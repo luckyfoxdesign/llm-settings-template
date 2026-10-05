@@ -4,10 +4,10 @@
 Runs on the host with system Python 3.9+. Warning-only unless --strict is used.
 """
 
-import subprocess
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+from workspace_rules import extract_frontmatter, markdown_files
 
 DOCS_ROOT = Path(__file__).parent.parent / "docs"
 
@@ -37,32 +37,6 @@ VALID_PROJECTS = {"app", "landing", "nginx", "workspace", "cross"}
 TYPES_REQUIRING_PROJECT = {"task", "bug"}
 
 
-def extract_frontmatter(text: str) -> Optional[Dict]:
-    if not text.startswith("---\n"):
-        return None
-    end = text.find("\n---", 4)
-    if end == -1:
-        return None
-    fm: Dict = {}
-    current_list: Optional[str] = None
-    for line in text[4:end].splitlines():
-        if line.startswith("  - ") and current_list is not None:
-            fm[current_list].append(line[4:].strip())
-        elif ":" in line and not line.startswith(" "):
-            key, _, val = line.partition(":")
-            key = key.strip()
-            val = val.strip()
-            if val in ("", "[]"):
-                fm[key] = []
-                current_list = key if val == "" else None
-            else:
-                fm[key] = val.strip("'\"")
-                current_list = None
-        else:
-            current_list = None
-    return fm
-
-
 def main() -> int:
     args = sys.argv[1:]
     if args not in ([], ["--strict"]):
@@ -77,11 +51,15 @@ def main() -> int:
     missing: List[str] = []
     invalid: List[Tuple[str, List[str]]] = []
 
-    for md in sorted(DOCS_ROOT.rglob("*.md")):
+    for md in sorted(markdown_files(DOCS_ROOT)):
         if md.name in SKIP:
             continue
-        fm = extract_frontmatter(md.read_text(encoding="utf-8"))
         rel = str(md.relative_to(DOCS_ROOT.parent))
+        try:
+            fm = extract_frontmatter(md.read_text(encoding="utf-8"))
+        except ValueError as error:
+            invalid.append((rel, [str(error)]))
+            continue
 
         if fm is None:
             missing.append(rel)
@@ -92,31 +70,38 @@ def main() -> int:
         t = fm.get("type")
         if t is None:
             errs.append("missing 'type'")
-        elif t not in VALID_TYPES:
-            errs.append("unknown type '{0}'".format(t))
+        elif not isinstance(t, str) or t not in VALID_TYPES:
+            errs.append("invalid type")
 
         s = fm.get("status")
         if s is None:
             errs.append("missing 'status'")
-        elif s not in VALID_STATUSES:
-            errs.append("unknown status '{0}'".format(s))
+        elif not isinstance(s, str) or s not in VALID_STATUSES:
+            errs.append("invalid status")
 
-        if t in TYPES_REQUIRING_PROJECT:
+        if isinstance(t, str) and t in TYPES_REQUIRING_PROJECT:
             p = fm.get("project")
             if p is None:
                 errs.append("missing 'project' for type '{0}'".format(t))
-            elif p not in VALID_PROJECTS:
-                errs.append("unknown project '{0}'".format(p))
+            elif not isinstance(p, str) or p not in VALID_PROJECTS:
+                errs.append("invalid project")
             elif p == "cross":
                 projects = fm.get("projects")
-                if not projects:
+                if not isinstance(projects, list) or not projects:
                     errs.append("project: cross requires non-empty 'projects' list")
                 elif isinstance(projects, list):
                     unknown = [
-                        x for x in projects if x not in VALID_PROJECTS or x == "cross"
+                        x for x in projects if not isinstance(x, str) or x not in VALID_PROJECTS or x == "cross"
                     ]
                     if unknown:
-                        errs.append("unknown projects in list: {0}".format(unknown))
+                        errs.append("invalid project in projects list")
+                    elif len(set(projects)) != len(projects):
+                        errs.append("duplicate projects")
+
+        if t in ("task", "bug"):
+            expected = "wip" if "wip" in md.relative_to(DOCS_ROOT).parts else "todo" if md.parent.name == "todo" else None
+            if expected and s not in (expected, "blocked"):
+                errs.append("status must match task folder")
 
         if errs:
             invalid.append((rel, errs))
@@ -138,15 +123,7 @@ def main() -> int:
     else:
         print("\nTotal: {0} file(s) need attention.".format(len(missing) + len(invalid)))
 
-    build_index = Path(__file__).parent / "build-code-index.py"
-    index_failed = False
-    if build_index.exists():
-        result = subprocess.run([sys.executable, str(build_index)], check=False)
-        index_failed = result.returncode != 0
-        if index_failed:
-            print("Code index refresh failed with exit {0}.".format(result.returncode))
-
-    return 1 if strict and (missing or invalid or index_failed) else 0
+    return 1 if strict and (missing or invalid) else 0
 
 
 if __name__ == "__main__":

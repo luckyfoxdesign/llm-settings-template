@@ -101,7 +101,25 @@ if [[ "$CURRENT_BRANCH" != "main" ]]; then
 fi
 update_main
 
+verify_result() {
+  local verified_tree
+  verified_tree="$(git -C "$REPO_ROOT" write-tree)"
+  if [[ ! -f "$REPO_ROOT/scripts/verify.sh" || -L "$REPO_ROOT/scripts/verify.sh" ]]; then
+    echo "ERROR: merged repo has no regular scripts/verify.sh; task branch retained" >&2
+    exit 1
+  fi
+  if ! (cd "$REPO_ROOT" && bash scripts/verify.sh); then
+    echo "ERROR: merged repo gate failed; pending merge and task branch retained" >&2
+    exit 1
+  fi
+  if [[ "$verified_tree" != "$(git -C "$REPO_ROOT" write-tree)" ]] || ! git -C "$REPO_ROOT" diff --quiet; then
+    echo "ERROR: verification modified tracked files or the index; task branch retained" >&2
+    exit 1
+  fi
+}
+
 if git -C "$REPO_ROOT" merge-base --is-ancestor "$BRANCH" main; then
+  verify_result
   git -C "$REPO_ROOT" branch -d "$BRANCH"
   echo "Branch finished: $BRANCH was already merged into main in $REPO_ROOT"
   exit 0
@@ -111,7 +129,8 @@ if ! git -C "$REPO_ROOT" merge --no-ff --no-commit "$BRANCH"; then
   echo "ERROR: merge conflict; resolve or abort the merge manually" >&2
   exit 1
 fi
-bash "$SCRIPT_DIR/check-staged-paths.sh" "$REPO_ROOT"
+bash "$SCRIPT_DIR/check-staged-paths.sh" "$REPO_ROOT" --allow-diff main "$BRANCH"
+verify_result
 git -C "$REPO_ROOT" commit -m "Merge $BRANCH"
 git -C "$REPO_ROOT" branch -d "$BRANCH"
 echo "Branch finished: merged $BRANCH into main and deleted it in $REPO_ROOT"

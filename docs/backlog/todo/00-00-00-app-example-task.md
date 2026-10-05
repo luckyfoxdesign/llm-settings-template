@@ -52,7 +52,7 @@ An engineering fuse, not a universal threshold. Its value comes from being fixed
 
 - At most 5 production files.
 - No new dependencies.
-- No new abstraction layers without a test that requires them.
+- No new abstraction layers; adjust this limit explicitly when required by the task.
 
 ## Verification
 
@@ -62,6 +62,10 @@ The exact commands that produce the pass/fail signal.
 bash app/scripts/verify.sh
 ```
 
+## Task Paths
+
+- `app/src/example.py`
+
 ## Implementation Steps
 
 1. First step.
@@ -70,9 +74,9 @@ bash app/scripts/verify.sh
 ## Done When
 
 - [ ] `Verification` commands pass.
-- [ ] No confirmed `blocker`/`high` findings from one `/review-task` pass.
+- [ ] No confirmed `blocker`/`high` findings for the final implementation snapshot.
 - [ ] The diff stays within `Change Budget`.
-- [ ] At most one reviewer pass has run.
+- [ ] The final implementation snapshot has recorded review evidence.
 
 ## Related
 
