@@ -18,7 +18,7 @@ for host in ('.agents', '.claude'):
     if any(parent.is_symlink() for parent in (repo, repo / host, folder)):
         sys.exit('ERROR: refusing symlinked skill destination directory')
     folder.mkdir(parents=True, exist_ok=True)
-    for name in ('create-task', 'start-task', 'review-task', 'complete-task'):
+    for name in ('create-task', 'start-task', 'review-task', 'complete-task', 'exa-research'):
         source = workspace / '.agents/skills' / name
         if not (source / 'SKILL.md').is_file():
             sys.exit('ERROR: missing workspace skill ' + name)

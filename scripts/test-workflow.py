@@ -233,7 +233,7 @@ class Fixtures(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
 
     def test_linking_skills_is_idempotent_without_overwrite(self):
-        for name in ['create-task', 'start-task', 'review-task', 'complete-task']:
+        for name in ['create-task', 'start-task', 'review-task', 'complete-task', 'exa-research']:
             skill = self.workspace / '.agents/skills' / name
             skill.mkdir(parents=True)
             (skill / 'SKILL.md').write_text('---\nname: ' + name + '\ndescription: Fixture\n---\n')
@@ -242,6 +242,10 @@ class Fixtures(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
         linked = self.repo / '.agents/skills/create-task'
         self.assertTrue(linked.is_symlink())
+        for host in ['.agents', '.claude']:
+            exa = self.repo / host / 'skills/exa-research'
+            self.assertTrue(exa.is_symlink())
+            self.assertEqual(exa.resolve(), self.workspace / '.agents/skills/exa-research')
         linked.unlink()
         linked.mkdir()
         result = self.helper('link-workspace-skills.sh', self.repo)

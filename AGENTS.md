@@ -55,6 +55,10 @@ Workspace `docs/` is product documentation; rules live in `docs/folder-rules.md`
 
 Read `PROJECT_MAP.md` before scanning. Code runtime, dependency work, and repo gates run in Docker; workspace Python/shell helpers and Git run on the host. Respect the user's current scope and existing authorization.
 
+## Optional External Research
+
+Exa defaults to context-dependent `auto`. At conversation startup, read `.agents/skills/exa-research/SKILL.md` (workspace-relative) for saved preferences and the one-time setup question. Use it only for relevant public external facts; missing tools, exhausted credits, or service errors fall back to the existing workflow. Setup: `docs/product/architecture/optional-exa.md`.
+
 ## LLM Memory
 
 Auto-memory is keyed to `dev/[project-name]/`. Tag new facts with `app`, `landing`, `nginx`, or `workspace` unless workspace-wide.

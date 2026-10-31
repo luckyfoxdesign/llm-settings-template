@@ -135,6 +135,12 @@ After the review pass, non-blocking findings leave the current task rather than 
 | `speculative` | `docs/ideas/` |
 | cosmetic | dropped |
 
+## Optional Exa Research
+
+Exa defaults to context-dependent `auto` mode. On first use of the workspace, the agent offers keyless access, account access through OAuth, or off, and saves your choice locally in `.exa-preferences`. The question does not block work; without a connection, the ordinary workflow continues. Say `Exa: off` to disable it or `Exa: auto` to enable it for the current conversation. Local-only work skips it; exhausted credits and service errors return to the ordinary workflow without retries or paid upgrades.
+
+Setup examples, free-access options, limits, and fallback behavior: [Optional Exa](docs/product/architecture/optional-exa.md). The shared `exa-research` skill is also linked into independent code repos by `scripts/link-workspace-skills.sh`.
+
 ## Context Budget
 
 Hot-context files are capped so agents keep reading them in full:
