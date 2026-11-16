@@ -35,6 +35,39 @@ def markdown_files(directory):
                 yield path
 
 
+def split_inline_list(inside):
+    pieces = []
+    start = 0
+    quote = None
+    at_start = True
+    index = 0
+    while index < len(inside):
+        char = inside[index]
+        if quote:
+            if quote == '"' and char == '\\':
+                index += 2
+                continue
+            if char == quote:
+                if quote == "'" and index + 1 < len(inside) and inside[index + 1] == "'":
+                    index += 2
+                    continue
+                quote = None
+        elif at_start and char in ('"', "'"):
+            quote = char
+            at_start = False
+        elif char == ',':
+            pieces.append(inside[start:index])
+            start = index + 1
+            at_start = True
+        elif not char.isspace():
+            at_start = False
+        index += 1
+    if quote:
+        raise ValueError('invalid quoted scalar')
+    pieces.append(inside[start:])
+    return pieces
+
+
 def scalar(value):
     value = value.strip()
     if not value:
@@ -45,7 +78,7 @@ def scalar(value):
         inside = value[1:-1].strip()
         if not inside:
             return []
-        pieces = re.split(r',(?=(?:[^\"\']|\"[^\"]*\"|\'[^\']*\')*$)', inside)
+        pieces = split_inline_list(inside)
         result = [scalar(piece) for piece in pieces]
         if any(not isinstance(x, str) or not x for x in result):
             raise ValueError('inline lists must contain nonempty scalars')
@@ -75,6 +108,8 @@ def extract_frontmatter(text):
         raise ValueError('unclosed frontmatter') from None
     rows = []
     for line in lines[1:end]:
+        if len(line) > 1024:
+            raise ValueError('frontmatter line too long')
         if not line.strip() or line.lstrip().startswith('#'):
             continue
         if '\t' in line:

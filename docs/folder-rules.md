@@ -196,6 +196,8 @@ Remove `Closes #N` when there is no GitHub issue.
 
 Supported YAML subset: plain/quoted scalars, block and inline scalar lists, and nested mappings. Anchors, tags, flow mappings, and multiline scalars are rejected. `projects` must be a list of unique valid projects, not a string.
 
+Each frontmatter line is limited to 1 024 characters, including indentation, comments, and blank lines. Longer lines are rejected with `frontmatter line too long`; Markdown body lines are not limited.
+
 All new docs files, except technical references like `folder-rules.md`, should start with YAML frontmatter.
 
 Task:

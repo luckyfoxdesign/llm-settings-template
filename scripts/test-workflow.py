@@ -7,9 +7,10 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
 import unittest
 from pathlib import Path
-from workspace_rules import extract_frontmatter, markdown_files, private_path
+from workspace_rules import extract_frontmatter, markdown_files, private_path, scalar
 
 ROOT = Path(__file__).resolve().parent.parent
 spec = importlib.util.spec_from_file_location('task_contract', ROOT / 'scripts/check-task-contract.py')
@@ -54,6 +55,38 @@ def run(args, cwd, check=False):
 
 
 class Documents(unittest.TestCase):
+    def test_large_inline_list_parses_quickly(self):
+        value = '[' + ','.join(['item'] * 16001) + ']'
+        started = time.perf_counter()
+        parsed = scalar(value)
+        elapsed = time.perf_counter() - started
+        self.assertEqual(parsed, ['item'] * 16001)
+        self.assertLess(elapsed, 0.5)
+
+    def test_inline_list_quotes_and_escapes(self):
+        cases = [
+            ('[]', []),
+            ("[don't, next]", ["don't", 'next']),
+            ('[ plain , "two, three", \'four, five\' ]', ['plain', 'two, three', 'four, five']),
+            ("['it''s, fine', next]", ["it's, fine", 'next']),
+            (r'["say \"hi, there\"", next]', ['say "hi, there"', 'next']),
+            (r'["path\\", next]', ['path\\', 'next']),
+        ]
+        for value, expected in cases:
+            with self.subTest(value=value):
+                self.assertEqual(scalar(value), expected)
+        for value in ['[a,,b]', '[a,]', '["unclosed, next]', "['unclosed, next]", '[a, [b]]']:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                scalar(value)
+
+    def test_frontmatter_line_length_boundary(self):
+        line = 'area: ' + 'x' * (1024 - len('area: '))
+        self.assertEqual(extract_frontmatter('---\n' + line + '\n---')['area'], line[6:])
+        for line in [line + 'x', 'area: ' + 'x' * 2000, '#' + 'x' * 1024, ' ' * 1025]:
+            with self.subTest(length=len(line)), self.assertRaisesRegex(ValueError, '^frontmatter line too long$'):
+                extract_frontmatter('---\n' + line + '\n---')
+        self.assertEqual(extract_frontmatter('---\narea: ok\n---\n' + 'x' * 2000), {'area': 'ok'})
+
     def test_lists_and_nested_metadata(self):
         for value in ['[app, nginx]', '\n  - app\n  - nginx']:
             parsed = extract_frontmatter('---\nprojects: ' + value + '\nsource:\n  kind: issue\n---\n')
@@ -196,6 +229,14 @@ class Fixtures(unittest.TestCase):
         self.assertEqual(index.read_text(), 'Index must not change.\n')
         task.write_text(task.read_text().replace('[app, invalid-repo]', '[app, nginx]'))
         self.assertEqual(run(['python3', '-B', 'scripts/validate-docs-frontmatter.py', '--strict'], self.workspace).returncode, 0)
+
+    def test_frontmatter_validator_reports_long_lines(self):
+        docs = self.workspace / 'docs/backlog/todo'
+        docs.mkdir(parents=True)
+        (docs / 'task.md').write_text(VALID_TASK.replace('project: workspace', 'project: ' + 'x' * 2000))
+        result = run(['python3', '-B', 'scripts/validate-docs-frontmatter.py', '--strict'], self.workspace)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('docs/backlog/todo/task.md: frontmatter line too long', result.stdout)
 
     def test_code_index_includes_completed_records(self):
         docs = self.workspace / 'docs/done/long'
