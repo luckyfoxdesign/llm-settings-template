@@ -63,6 +63,18 @@ cp -r _templates/sub-repo/. app/
 
 The template ships `<repo>/scripts/verify.sh` as a TODO stub that **fails until you fill it in**. That is deliberate: a repo with no real gate should not be able to close tasks.
 
+### Existing Repos Without A Verification Gate
+
+When adopting this template with existing code repos, copy
+`_templates/sub-repo/scripts/verify.sh` into each repo missing
+`<repo>/scripts/verify.sh` (create its `scripts/` directory if needed).
+Configure the script with that repo's real Docker commands, fill in the matching
+`Verification Gates` table in `<repo>/AGENTS.md` (add it from the repo template if
+absent), and list `bash scripts/verify.sh` under `Commands` in
+`<repo>/PROJECT_MAP.md`. Run `bash <repo>/scripts/verify.sh` from the workspace
+root and resolve any failures before closing tasks in that repo; the unconfigured
+stub deliberately fails and does not satisfy the verification contract.
+
 ## Files To Read
 
 For humans:
