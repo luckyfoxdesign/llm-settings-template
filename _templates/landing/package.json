@@ -13,10 +13,10 @@
     "tokens:lint": "node scripts/check-tokens.mjs"
   },
   "dependencies": {
-    "@astrojs/sitemap": "3.7.0",
-    "@astrojs/vercel": "8.2.8",
+    "@astrojs/sitemap": "3.7.5",
+    "@astrojs/vercel": "11.0.22",
     "@tailwindcss/vite": "4.1.13",
-    "astro": "5.13.10",
+    "astro": "7.4.12",
     "tailwindcss": "4.1.13"
   },
   "devDependencies": {
