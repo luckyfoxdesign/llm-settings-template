@@ -54,6 +54,12 @@ cp -r _templates/sub-repo/. app/
 
 5. Run `bash scripts/link-workspace-skills.sh <repo>` for each code repo, then fill each repo's `AGENTS.md`, `CLAUDE.md`, `PROJECT_MAP.md`, `scripts/update-project-map.sh`, and `scripts/verify.sh`.
 6. Keep workspace `PROJECT_MAP.md` as an aggregator only. Repo internals belong in `<repo>/PROJECT_MAP.md`.
+7. Configure your new GitHub repository: enable Dependabot alerts, security updates,
+   and private vulnerability reporting; add an active branch ruleset for `main`
+   that blocks force pushes and deletion and requires the `verify` status check.
+   These repository settings are not copied from the template. Publish the
+   included workflow and confirm a successful run before requiring its check.
+   Update the reporting link in `SECURITY.md` to point to your repository.
 
 The template ships `<repo>/scripts/verify.sh` as a TODO stub that **fails until you fill it in**. That is deliberate: a repo with no real gate should not be able to close tasks.
 
