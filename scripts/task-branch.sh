@@ -3,15 +3,20 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 <start|finish> <repo> <slug>" >&2
+  echo "Usage: $0 <start|finish> <repo> <slug> [--allow-scripts-change]" >&2
   exit 2
 }
 
-[[ "$#" -eq 3 ]] || usage
+[[ "$#" -eq 3 || "$#" -eq 4 ]] || usage
 ACTION="$1"
 REPO_ARG="$2"
 SLUG="$3"
 case "$ACTION" in start|finish) ;; *) usage ;; esac
+ALLOW_SCRIPTS_CHANGE=0
+if [[ "$#" -eq 4 ]]; then
+  [[ "$ACTION" == "finish" && "$4" == "--allow-scripts-change" ]] || usage
+  ALLOW_SCRIPTS_CHANGE=1
+fi
 
 if [[ ! "$SLUG" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
   echo "ERROR: slug must be lowercase kebab-case" >&2
@@ -100,6 +105,14 @@ if [[ "$CURRENT_BRANCH" != "main" ]]; then
   git -C "$REPO_ROOT" switch main
 fi
 update_main
+
+# Stop before merging or executing code supplied by the task branch.
+SCRIPTS_CHANGED="$(git -C "$REPO_ROOT" diff --name-only "main...$BRANCH" -- scripts/)"
+if [[ -n "$SCRIPTS_CHANGED" && "$ALLOW_SCRIPTS_CHANGE" -ne 1 ]]; then
+  echo "ERROR: task branch changes scripts/; review these files with the user before retrying with --allow-scripts-change:" >&2
+  printf '%s\n' "$SCRIPTS_CHANGED" >&2
+  exit 1
+fi
 
 verify_result() {
   local verified_tree

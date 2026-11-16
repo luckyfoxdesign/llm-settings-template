@@ -121,6 +121,20 @@ Every task file in `docs/backlog/todo/` and `docs/wip/` carries these sections. 
 
 For `project: app|landing|nginx`, `Verification` includes `bash <repo>/scripts/verify.sh`. For `project: workspace`, it includes `bash scripts/verify.sh`. Add narrower acceptance commands when the standard gate does not prove the requested behavior.
 
+`Verification` contains fenced `bash`/`sh` command blocks, one command per line.
+The allowlist is `bash scripts/<name>.sh [args]`,
+`bash <repo>/scripts/verify.sh [args]` (`app|landing|nginx`),
+`python3 [-B] scripts/<name>.py [args]`, and
+`docker compose [-f <relative-file>] run --rm <service> [args]`.
+Script names use letters, digits, underscores, and hyphens. Paths must not
+traverse `..` or name private files. Arguments may be quoted, but shell operators
+(`|`, `;`, `&&`, `||`), substitutions (`$(`, backticks, variables), redirects,
+globs, and other shell syntax are rejected even inside quotes. The words `curl`,
+`wget`, `ssh`, `sudo`, `rm`, and `eval` are rejected (`--rm` is allowed).
+Commands outside this list belong in separate acceptance checks requiring
+explicit user authorization, not automatic execution from Markdown.
+Strict and completion validation both enforce the allowlist.
+
 Check:
 
 ```bash

