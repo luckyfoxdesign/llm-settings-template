@@ -2,6 +2,7 @@
 # Done index
 
 ## workspace
+- 2026-11-16 · [Document Migrating Existing Repos To scripts/verify.sh](short/06-08-26-workspace-document-verify-migration.md)
 - 2026-11-16 · [Remove Quadratic Parsing From The Frontmatter Reader](short/15-11-26-workspace-frontmatter-redos.md)
 - 2026-11-16 · [Gate Commands That Reach The Host From Markdown And Task Branches](short/15-11-26-workspace-gate-markdown-commands.md)
 - 2026-11-16 · [Public Repository Hygiene: Branch Rules, Dependabot, CI Gate, Security Policy](short/15-11-26-workspace-github-repo-hygiene.md)
