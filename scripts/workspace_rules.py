@@ -11,9 +11,14 @@ def private_path(path):
         name = part.lower()
         if name == '.env.example' and index == len(parts) - 1:
             continue
-        if (name.startswith('.env') or name.endswith(('.pem', '.key'))
-                or name.startswith(('id_rsa', 'id_ed25519'))
+        if (name.startswith('.env') or name.endswith(('.pem', '.key', '.p12', '.pfx', '.jks', '.keystore',
+                                  '.ovpn', '.kdbx', '.asc', '.gpg', '.tfstate'))
+                or name.startswith('id_')
                 or name in {'.ssh', '.aws', '.kube', '.gnupg', '.npmrc', '.netrc', 'auth.json'}
+                or name in {'kubeconfig', '.pgpass', '.htpasswd', '.pypirc', '.boto', '.s3cfg', 'wp-config.php'}
+                or (name.startswith('service-account') and name.endswith('.json'))
+                or (name == 'config.json' and index > 0 and parts[index - 1].lower() == '.docker')
+                or name.endswith('-token') or '_token' in name
                 or 'secret' in name or 'credential' in name
                 or re.search(r'(?:^|[._-])(?:oauth|auth|access|refresh|api|session|bearer)[._-]?tokens?(?:[._-]|$)', name)
                 or name in {'token', 'token.txt', 'token.json', 'tokens.json', 'token.md'}):

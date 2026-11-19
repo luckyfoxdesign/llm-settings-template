@@ -145,6 +145,8 @@ Warning-only by default; `--strict` fails on missing or empty sections, incomple
 
 The staged-path guard accepts `--task <task-file>` to enforce approved paths and the numeric file limit. For code repos, add `--base main` to include already committed task changes. File budgets count changed task files; for cross tasks, check the aggregate across repos before closure. Completion documentation is staged separately with explicit `--allow <path>` arguments. Dependency and abstraction limits still require inspection; structural validators do not prove their semantics.
 
+For an optional content check, run `bash scripts/check-staged-paths.sh . --secrets-only --content-scan`, or add `--content-scan` to a task-scoped invocation. The wrapper runs `ghcr.io/gitleaks/gitleaks:latest protect --staged --redact` against the Git repository mounted read-only in Docker with container networking disabled. The first image pull needs network access. Findings and scanner errors fail the check; diagnostics are suppressed to prevent values from reaching the terminal. Missing Docker or an inaccessible daemon prints `SKIP` and exits 0: this is not evidence of a completed scan. Without the flag, only filenames are checked and Docker is not used. Python never reads staged contents. This opt-in scan is not part of `scripts/verify.sh`.
+
 ### Severity Routing
 
 After a review pass, findings that are not blocking go to their folder rather than into the current task:

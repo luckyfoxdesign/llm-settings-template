@@ -3,12 +3,14 @@
 import fnmatch
 import importlib.util
 import json
+import os
 import re
 import shutil
 import subprocess
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 from workspace_rules import extract_frontmatter, markdown_files, private_path, scalar
 
@@ -196,6 +198,22 @@ class Documents(unittest.TestCase):
     def test_private_paths_and_symlinks_are_not_opened(self):
         for name in ['.env', 'dir/.env.local', '.ssh/file', '.npmrc', 'auth.json', 'credentials.md', 'access-token.md', 'file.key']:
             self.assertTrue(private_path(name))
+        corpus = [
+            '.env', 'private.pem', 'private.key', 'id_rsa', 'id_ed25519',
+            '.npmrc', '.netrc', 'auth.json', '.vault-token', 'github_token.txt',
+            'GITHUB_TOKEN', 'service-account.json', 'kubeconfig', '.pgpass',
+            '.htpasswd', '.pypirc', 'client.p12', 'keystore.jks', 'vpn.ovpn',
+            'terraform.tfstate', '.docker/config.json', '.boto', '.s3cfg',
+            'wp-config.php', 'id_ecdsa',
+        ]
+        self.assertEqual(len(corpus), 25)
+        for name in corpus + ['file.pfx', 'file.keystore', 'file.kdbx', 'file.asc',
+                              'file.gpg', '.git-credentials', 'service-account-prod.json',
+                              'id_dsa', 'nested/.docker/config.json', 'nested/.vault-token']:
+            with self.subTest(name=name):
+                self.assertTrue(private_path(name))
+        for name in ['tokens/colors.used.json', 'token-pipeline.md']:
+            self.assertFalse(private_path(name))
         self.assertFalse(private_path('.env.example'))
         self.assertFalse(private_path('landing/scripts/generate-tokens.mjs'))
         self.assertFalse(private_path('landing/tokens/semantic.generated.json'))
@@ -464,6 +482,60 @@ class Fixtures(unittest.TestCase):
         self.assertNotEqual(self.helper('check-staged-paths.sh', self.repo, '--task', task).returncode, 0)
         task.write_text(task.read_text().replace('At most 1 workspace file', 'At most 2 workspace files'))
         self.assertEqual(self.helper('check-staged-paths.sh', self.repo, '--task', task).returncode, 0)
+
+    def test_optional_content_scan(self):
+        # A fake Docker records arguments only; fixtures contain no secret values.
+        bindir = self.workspace / 'bin'
+        bindir.mkdir()
+        docker = bindir / 'docker'
+        calls = self.workspace / 'calls.jsonl'
+        docker.write_text("#!/usr/bin/env python3\n"
+                          "import json, os, sys\n"
+                          "with open(os.environ['SCAN_CALLS'], 'a') as out:\n"
+                          "    out.write(json.dumps(sys.argv[1:]) + '\\n')\n"
+                          "print('diagnostic-canary', file=sys.stderr)\n"
+                          "sys.exit(int(os.environ.get('SCAN_INFO_STATUS' if sys.argv[1] == 'info' "
+                          "else 'SCAN_RUN_STATUS', '0')))\n")
+        docker.chmod(0o755)
+        with patch.dict(os.environ, {'PATH': str(bindir) + os.pathsep + os.environ['PATH'],
+                                     'SCAN_CALLS': str(calls)}):
+            self.assertEqual(self.helper('check-staged-paths.sh', self.repo, '--secrets-only').returncode, 0)
+            self.assertFalse(calls.exists())
+            result = self.helper('check-staged-paths.sh', self.repo, '--secrets-only', '--content-scan')
+            self.assertEqual(result.returncode, 0, result.stderr)
+            args = json.loads(calls.read_text().splitlines()[-1])
+            for arg in ['--rm', '--read-only', '--redact', '--staged', '--network=none',
+                        str(self.repo) + ':/repo:ro', 'ghcr.io/gitleaks/gitleaks:latest']:
+                self.assertIn(arg, args)
+            self.assertNotIn('diagnostic-canary', result.stdout + result.stderr)
+            with patch.dict(os.environ, {'SCAN_RUN_STATUS': '10'}):
+                result = self.helper('check-staged-paths.sh', '--content-scan', self.repo, '--secrets-only')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('findings', result.stderr)
+                self.assertNotIn('diagnostic-canary', result.stdout + result.stderr)
+            with patch.dict(os.environ, {'SCAN_RUN_STATUS': '125'}):
+                result = self.helper('check-staged-paths.sh', self.repo, '--secrets-only', '--content-scan')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('failed', result.stderr)
+            with patch.dict(os.environ, {'SCAN_INFO_STATUS': '1'}):
+                result = self.helper('check-staged-paths.sh', self.repo, '--secrets-only', '--content-scan')
+                self.assertEqual(result.returncode, 0)
+                self.assertIn('SKIP', result.stdout)
+            # A rejected filename prevents Docker from running at all.
+            self.git('update-index', '--add', '--cacheinfo',
+                     '100644,' + self.git('hash-object', '-w', '--stdin').stdout.strip() + ',github_token.txt')
+            calls.unlink()
+            result = self.helper('check-staged-paths.sh', self.repo, '--secrets-only', '--content-scan')
+            self.assertNotEqual(result.returncode, 0)
+            self.assertFalse(calls.exists())
+            self.git('update-index', '--force-remove', 'github_token.txt')
+            docker.unlink()
+            for tool in ['bash', 'python3', 'git', 'dirname']:
+                (bindir / tool).symlink_to(shutil.which(tool))
+            with patch.dict(os.environ, {'PATH': str(bindir)}):
+                result = self.helper('check-staged-paths.sh', self.repo, '--secrets-only', '--content-scan')
+                self.assertEqual(result.returncode, 0)
+                self.assertIn('Docker is not installed', result.stdout)
 
     def prepare_merge(self, conflicting_result):
         for name in ['a.txt', 'b.txt']:

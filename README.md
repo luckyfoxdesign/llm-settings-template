@@ -216,6 +216,8 @@ Setup and generated indexes:
 
 ## Safety Defaults
 
+In GitHub repository settings, enable secret scanning and its **non-provider patterns** option when available, alongside push protection; see [GitHub's non-provider pattern setting](https://docs.github.com/en/rest/repos/repos#update-a-repository).
+
 Claude Code runs `scripts/guard-bash.sh` before Bash and built-in file tools.
 The guard blocks private paths by name, checks resolved file paths without opening
 them, and preserves the `.env.example` exception. Directory searches via Grep/Glob
