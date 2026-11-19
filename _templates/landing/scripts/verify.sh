@@ -9,7 +9,7 @@ cd "$ROOT"
 
 # Docker-only, per CLAUDE.md. Required gates must pass; empty optional gates skip.
 BUILD_CMD=(docker compose run --rm astro-dev npm run build)        # required
-TOKENS_CMD=(docker compose run --rm astro-dev npm run tokens:check) # required
+TOKENS_CMD=(docker compose run --rm astro-dev sh -c "npm run tokens:generate && npm run tokens:check") # required for fresh copies
 LINT_CMD=()        # optional — no linter configured
 TEST_CMD=()        # optional — no test suite (static site)
 TYPECHECK_CMD=()   # optional — template rule: no TypeScript in source

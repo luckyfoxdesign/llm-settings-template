@@ -1,20 +1,13 @@
-# Use Node.js LTS version
-FROM node:20-bookworm-slim
+# Development server; publish only on localhost through Compose.
+FROM node:26-bookworm-slim
 
-# Set working directory
+ENV ASTRO_TELEMETRY_DISABLED=1
 WORKDIR /app
 
-# Copy package files first, to use caching
 COPY package*.json ./
+RUN npm ci --ignore-scripts && chown -R node:node /app
+COPY --chown=node:node . .
 
-# Install dependencies
-RUN npm ci
-
-# Copy rest of source code
-COPY . .
-
-# Expose port for dev server
 EXPOSE 3000
-
-# Run development server (Astro dev)
+USER 1000:1000
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]

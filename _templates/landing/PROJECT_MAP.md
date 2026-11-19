@@ -2,7 +2,7 @@
 <!-- Repo-local map is the source of truth for this repo internals. -->
 <!-- Workspace ../PROJECT_MAP.md aggregates repo maps and should not duplicate this detail. -->
 
-Astro 5 + Tailwind v4 static landing with a design-token pipeline.
+Astro + Tailwind v4 static landing with a design-token pipeline.
 
 ## Map contract
 
@@ -46,8 +46,8 @@ Astro 5 + Tailwind v4 static landing with a design-token pipeline.
 ## Commands
 
 ```bash
-bash scripts/verify.sh                                       # single gate: build, then tokens:check
-docker compose up astro-dev                                  # dev server on :3000
+bash scripts/verify.sh                                       # single gate: build, tokens:generate, tokens:check
+docker compose up astro-dev                                  # dev server on 127.0.0.1:3000
 docker compose run --rm astro-dev npm run build              # static build to dist/
 docker compose run --rm astro-dev npm run tokens:generate    # rebuild tokens/
 docker compose run --rm astro-dev npm run tokens:check       # control values + drift vs generated
@@ -71,8 +71,8 @@ docker compose run --rm astro-dev npm run tokens:lint        # design-vs-code dr
 
 ## Docker Services
 
-- `astro-dev` — `docker-files/Dockerfile.dev`, port 3000, source bind-mounted.
-- `astro-prod` — `docker-files/Dockerfile.prod`, static build served on port 8080.
+- `astro-dev` — `docker-files/Dockerfile.dev`, localhost port 3000, source bind-mounted.
+- `astro-preview` — `docker-files/Dockerfile.prod`, local static preview on localhost port 8080; production deploys to Vercel.
 
 ## Package Scripts
 

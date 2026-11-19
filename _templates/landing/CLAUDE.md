@@ -1,6 +1,6 @@
 # [project-name]-[repo-name]
 
-Astro 5 + Tailwind v4 landing, part of workspace `dev/[project-name]`. Product docs, backlog, shared skills, and commands live in `../docs/`, `../AGENTS.md`, `../CLAUDE.md`, `../.agents/skills/`, and `../.claude/commands/`.
+Astro + Tailwind v4 landing, part of workspace `dev/[project-name]`. Product docs, backlog, shared skills, and commands live in `../docs/`, `../AGENTS.md`, `../CLAUDE.md`, `../.agents/skills/`, and `../.claude/commands/`.
 
 This file is repo-local context only. `.claude/` is not part of this template: settings and slash commands come from the workspace spin-up, not from here.
 
@@ -21,7 +21,7 @@ Update the map with `scripts/update-project-map.sh`; it updates only the generat
 
 Use Docker for all runtime, build, and dependency work. Git runs locally.
 
-- Config file: `compose.yml`; services `astro-dev` and `astro-prod`.
+- Config file: `compose.yml`; services `astro-dev` and `astro-preview`.
 - Use `docker compose run --rm <service>` or `docker compose up`.
 - Do not install Node or npm on the host.
 - After Docker builds, clean only dangling layers when needed:
@@ -39,7 +39,7 @@ Adding or removing a `--color-*` declaration means updating `EXPECTED.semanticTo
 ## Code Quality
 
 ```bash
-bash scripts/verify.sh          # single gate: build, then tokens:check
+bash scripts/verify.sh          # single gate: build, tokens:generate, tokens:check
 docker compose run --rm astro-dev npm run build
 docker compose run --rm astro-dev npm run tokens:generate
 docker compose run --rm astro-dev npm run tokens:check
