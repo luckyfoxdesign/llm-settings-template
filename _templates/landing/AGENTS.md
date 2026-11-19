@@ -87,6 +87,12 @@ No linter or formatter configured. Do not add one as a side effect of an unrelat
 | test | — | no |
 | typecheck | — | no |
 
+Optional gate (outside `scripts/verify.sh`; promote explicitly if required):
+
+| Gate | Command | Required |
+|---|---|---|
+| security | `bash ../scripts/check-security.sh . --strict` | no |
+
 Protocol: workspace `../docs/product/architecture/verification-contract.md`. Do not restate it here.
 
 ## Change Budget

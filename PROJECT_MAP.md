@@ -31,6 +31,12 @@ dev/[project-name]/
 └── nginx/PROJECT_MAP.md      # nginx repo, has its own update-project-map.sh
 ```
 
+## Shared Security Check
+
+`bash scripts/check-security.sh <repo-path> [--strict]` runs optional Docker-based
+security checks. See [security checklist](docs/product/architecture/security-checklist.md).
+It is separate from the workspace verification gate.
+
 ## Adding A Code Repo
 
 After `git init <repo-name>`, copy the template:

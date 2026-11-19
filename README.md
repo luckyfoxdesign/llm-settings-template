@@ -200,6 +200,7 @@ Lifecycle mechanics — deterministic steps used by the task commands:
 
 Validators — document/budget checks warn standalone; ownership checks always fail on a violation:
 
+- `check-security.sh <repo-path> [--strict]` — optional Docker security checks; see the [security checklist](docs/product/architecture/security-checklist.md). Network-dependent; excluded from `verify.sh`.
 - `check-context-budget.sh` — flag hot-context files over their budgets.
 - `check-no-flow-duplication.sh` — check workflow ownership only in known instruction files.
 - `validate-docs-frontmatter.py` — flag docs with missing or invalid frontmatter.
