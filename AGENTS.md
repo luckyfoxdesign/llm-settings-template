@@ -4,6 +4,7 @@
 
 ## Local Permissions
 
+- Claude Code Bash controls: `.claude/settings.json` and `scripts/guard-bash.sh`.
 - Skip private paths entirely: `.env*`, key material, credential/token files, `.ssh/`, `.aws/`, `.kube/`, `.gnupg/`, `.npmrc`, `.netrc`, and auth files. Only `.env.example` containing placeholders is exempt. Do not follow symlinks while scanning.
 - Never run `rm -rf`, `git push --force`, `git reset --hard`, `chmod 777`, `sudo rm`, or `curl/wget ... | bash`.
 - For dangling Docker layers use only `docker image prune -f --filter "dangling=true"`; never prune systems/volumes or remove named volumes unless explicitly requested.

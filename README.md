@@ -216,6 +216,24 @@ Setup and generated indexes:
 
 ## Safety Defaults
 
+Claude Code settings use filesystem-root `Read(//**/...)` deny rules as well as
+workspace-relative rules to protect private paths outside the project, including
+`/tmp` and its macOS alias `/private/tmp`. `.env.example` stays exempt.
+Read denies also cover built-in searches such as Grep on a best-effort basis;
+verify the actual tools in your Claude Code session.
+Settings deny destructive command patterns and run `scripts/guard-bash.sh`
+before Bash calls. The guard checks command text for private paths and destructive
+variants without executing the command or opening its target files; SSH and opaque
+shell evaluation require confirmation, including Python commands whose paths are
+assembled dynamically. It does not grant permission to safe commands.
+The sub-repo template calls the shared guard in `../scripts/`; keep repos inside the
+workspace. A missing guard blocks Bash. These text checks are defense in depth,
+not an OS sandbox: generated paths and commands still need human review.
+After changing settings, verify in a normal-permission Claude Code session that
+Read, Grep, `cat`, and `python3` cannot access a disposable non-secret
+`/tmp/canary/.env.canary`, while `.env.example` containing placeholders is readable.
+Do not use real credentials for this canary.
+
 - Do not read `.env`, `.env.*`, or private key material (`.ssh/`, `*.pem`, `*.key`).
 - `.env.example` may be read and edited.
 - Code work is Docker-only.
