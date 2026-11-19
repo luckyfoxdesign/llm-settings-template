@@ -1,6 +1,6 @@
 # [project-name]-[repo-name] — Agent Instructions
 
-Astro 5 + Tailwind v4 landing in workspace `dev/[project-name]`. Product docs, backlog, and task flow live in `../docs/`, `../AGENTS.md`, and `../CLAUDE.md`. Before work, explicitly read `../AGENTS.md` and `../CLAUDE.md`; parent workspace discovery is not guaranteed across Git roots. This file contains repo-local rules.
+Astro + Tailwind v4 landing in workspace `dev/[project-name]`. Product docs, backlog, and task flow live in `../docs/`, `../AGENTS.md`, and `../CLAUDE.md`. Before work, explicitly read `../AGENTS.md` and `../CLAUDE.md`; parent workspace discovery is not guaranteed across Git roots. This file contains repo-local rules.
 
 ## Source Of Truth
 
@@ -82,10 +82,16 @@ No linter or formatter configured. Do not add one as a side effect of an unrelat
 | Gate | Command | Required |
 |---|---|---|
 | build | `docker compose run --rm astro-dev npm run build` | yes |
-| tokens | `docker compose run --rm astro-dev npm run tokens:check` | yes |
+| tokens | `docker compose run --rm astro-dev sh -c "npm run tokens:generate && npm run tokens:check"` | yes (fresh template) |
 | lint | — | no |
 | test | — | no |
 | typecheck | — | no |
+
+Optional gate (outside `scripts/verify.sh`; promote explicitly if required):
+
+| Gate | Command | Required |
+|---|---|---|
+| security | `bash ../scripts/check-security.sh . --strict` | no |
 
 Protocol: workspace `../docs/product/architecture/verification-contract.md`. Do not restate it here.
 
@@ -109,6 +115,12 @@ Dependencies are pinned to exact versions, not ranges: the `tokens:check` contro
 4. For major upgrades, review breaking changes first.
 5. Re-run `tokens:check` and confirm any changed control values before updating them.
 
+### Security update constraints
+
+- Astro and the Vercel adapter are upgraded together; check the adapter's Astro peer range and the official migration guides before a major upgrade.
+- The scoped `@vercel/routing-utils` override uses patched `path-to-regexp` within the same major: the upstream package pins a vulnerable release exactly. Keep the override until the upstream dependency is patched, then re-run the audit before removing it. Advisory: [GHSA-9wv6-86v2-598j](https://github.com/advisories/GHSA-9wv6-86v2-598j).
+- Moderate residual: typography depends on vulnerable `postcss-selector-parser` ([GHSA-rj75-hqrm-r3gf](https://github.com/advisories/GHSA-rj75-hqrm-r3gf), CPU exhaustion on crafted selectors). This template processes trusted CSS at build time; typography stays pinned to preserve the token pipeline. The audit's suggested downgrade is rejected. The high-severity audit gate remains required.
+
 ## Security
 
 Full policy: workspace `../AGENTS.md` → Security. Repo-local baseline:
@@ -116,9 +128,12 @@ Full policy: workspace `../AGENTS.md` → Security. Repo-local baseline:
 - Never hardcode secrets in code, configs, or compose files; new env variables go to `.env.example` with placeholder values.
 - Never print or log secret values (`echo $SECRET`, `env`, `docker compose config` without `--quiet`).
 - Escape or validate any external data rendered into HTML; never interpolate it into inline scripts.
-- Keep the response headers in `vercel.json`; do not weaken them as a side effect.
+- Keep every response header in `vercel.json`, including the strict Content-Security-Policy; avoid inline scripts/styles and external resources that it blocks.
+- HSTS in `vercel.json` includes `includeSubDomains; preload`: confirm HTTPS with valid certificates for every subdomain before requesting preload inclusion. The header alone does not submit the domain; removal from browser preload lists can take months ([preload guidance](https://hstspreload.org/contact/)).
 - Keep the Figma plugin's `networkAccess` closed; opening it needs an explicit task.
-- Containers: no `privileged: true`, no host network, publish only required ports.
+- Containers: run as non-root, disable Astro telemetry, no `privileged: true`, no host network, publish only required ports bound to `127.0.0.1`.
+- `host: true` is needed inside Docker; dev and preview servers must remain localhost-only on the host. Never expose them to the LAN.
+- `astro-preview` is for local inspection; production serves static output through Vercel.
 
 ## Local Permissions
 

@@ -68,6 +68,12 @@ Use `/create-task`, `/start-task`, `/review-task`, and `/complete-task` through 
 | typecheck | TODO | no |
 | build | TODO | no |
 
+Optional gate (outside `scripts/verify.sh`; promote explicitly if required):
+
+| Gate | Command | Required |
+|---|---|---|
+| security | `bash ../scripts/check-security.sh . --strict` | no |
+
 Fill this table in and mirror it in `scripts/verify.sh`. Until the required gates are set, the script fails on purpose.
 
 Protocol: workspace `../docs/product/architecture/verification-contract.md`. Do not restate it here.

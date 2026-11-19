@@ -63,6 +63,18 @@ cp -r _templates/sub-repo/. app/
 
 The template ships `<repo>/scripts/verify.sh` as a TODO stub that **fails until you fill it in**. That is deliberate: a repo with no real gate should not be able to close tasks.
 
+### Existing Repos Without A Verification Gate
+
+When adopting this template with existing code repos, copy
+`_templates/sub-repo/scripts/verify.sh` into each repo missing
+`<repo>/scripts/verify.sh` (create its `scripts/` directory if needed).
+Configure the script with that repo's real Docker commands, fill in the matching
+`Verification Gates` table in `<repo>/AGENTS.md` (add it from the repo template if
+absent), and list `bash scripts/verify.sh` under `Commands` in
+`<repo>/PROJECT_MAP.md`. Run `bash <repo>/scripts/verify.sh` from the workspace
+root and resolve any failures before closing tasks in that repo; the unconfigured
+stub deliberately fails and does not satisfy the verification contract.
+
 ## Files To Read
 
 For humans:
@@ -141,6 +153,12 @@ After the review pass, non-blocking findings leave the current task rather than 
 | `speculative` | `docs/ideas/` |
 | cosmetic | dropped |
 
+## Optional Exa Research
+
+Exa defaults to context-dependent `auto` mode. On first use of the workspace, the agent offers keyless access, account access through OAuth, or off, and saves your choice locally in `.exa-preferences`. The question does not block work; without a connection, the ordinary workflow continues. Say `Exa: off` to disable it or `Exa: auto` to enable it for the current conversation. Local-only work skips it; exhausted credits and service errors return to the ordinary workflow without retries or paid upgrades.
+
+Setup examples, free-access options, limits, and fallback behavior: [Optional Exa](docs/product/architecture/optional-exa.md). The shared `exa-research` skill is also linked into independent code repos by `scripts/link-workspace-skills.sh`.
+
 ## Context Budget
 
 Hot-context files are capped so agents keep reading them in full:
@@ -182,6 +200,7 @@ Lifecycle mechanics — deterministic steps used by the task commands:
 
 Validators — document/budget checks warn standalone; ownership checks always fail on a violation:
 
+- `check-security.sh <repo-path> [--strict]` — optional Docker security checks; see the [security checklist](docs/product/architecture/security-checklist.md). Network-dependent; excluded from `verify.sh`.
 - `check-context-budget.sh` — flag hot-context files over their budgets.
 - `check-no-flow-duplication.sh` — check workflow ownership only in known instruction files.
 - `validate-docs-frontmatter.py` — flag docs with missing or invalid frontmatter.
@@ -197,6 +216,28 @@ Setup and generated indexes:
 - `update-project-map.sh` — project-specific TODO stub for refreshing generated blocks in `PROJECT_MAP.md`.
 
 ## Safety Defaults
+
+In GitHub repository settings, enable secret scanning and its **non-provider patterns** option when available, alongside push protection; see [GitHub's non-provider pattern setting](https://docs.github.com/en/rest/repos/repos#update-a-repository).
+
+Claude Code runs `scripts/guard-bash.sh` before Bash and built-in file tools.
+The guard blocks private paths by name, checks resolved file paths without opening
+them, and preserves the `.env.example` exception. Directory searches via Grep/Glob
+inside the current workspace require confirmation; external directory searches,
+explicit private paths and private search globs are blocked.
+SSH and dynamic/interpreted Bash commands also require confirmation.
+Settings keep filesystem-root denies for private paths and relative `.env*` denies
+with an ordered `.env.example` exception. Claude Code 2.1.285 overmatches negated
+character classes and `.env.example/**`; its absolute denies cannot be carved out
+with `!`. The hook enforces the `.env*` distinction outside the working directory.
+It never emits an allow decision; normal permissions still apply to safe files,
+including permission prompts for files outside the working directories.
+The sub-repo template calls the shared guard in `../scripts/`; keep repos inside the
+workspace. A missing guard blocks matched tool calls. These text checks are defense in depth,
+not an OS sandbox: generated paths and commands still need human review.
+After changing settings, verify in a normal-permission Claude Code session that
+Read, Grep, `cat`, and `python3` cannot access a disposable non-secret
+`/tmp/canary/.env.canary`, while `.env.example` containing placeholders is readable.
+Do not use real credentials for this canary.
 
 - Do not read `.env`, `.env.*`, or private key material (`.ssh/`, `*.pem`, `*.key`).
 - `.env.example` may be read and edited.

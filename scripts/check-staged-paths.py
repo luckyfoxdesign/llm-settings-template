@@ -2,6 +2,7 @@
 """Check staged names against task paths or the paths contributed by a merge."""
 import argparse
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path, PurePosixPath
@@ -16,6 +17,8 @@ def main():
     scope.add_argument('--allow-diff', nargs=2, metavar=('BASE', 'HEAD'))
     scope.add_argument('--secrets-only', action='store_true', help='filename-only diagnostic, not a task scope check')
     scope.add_argument('--task', type=Path, help='WIP contract with Task Paths and numeric file limit')
+    parser.add_argument('--content-scan', action='store_true',
+                        help='opt-in redacted gitleaks scan in Docker; unavailable Docker is skipped')
     parser.add_argument('--base', help='also count committed task changes since this base')
     args = parser.parse_args()
     for ref in (args.allow_diff or []) + ([args.base] if args.base else []):
@@ -76,6 +79,33 @@ def main():
     if blocked:
         return 1
     print('OK: checked {} staged path(s), scope={}'.format(len(staged), 'diagnostic' if args.secrets_only else 'task'))
+    if args.content_scan:
+        # Only Docker reads staged contents; never capture or relay scanner diagnostics.
+        if not shutil.which('docker'):
+            print('SKIP: content scan unavailable: Docker is not installed.')
+            return 0
+        if subprocess.run(['docker', 'info'], stdout=subprocess.DEVNULL,
+                          stderr=subprocess.DEVNULL).returncode:
+            print('SKIP: content scan unavailable: Docker daemon is not accessible.')
+            return 0
+        repo = subprocess.run(['git', '-C', args.repo, 'rev-parse', '--show-toplevel'],
+                              capture_output=True, text=True)
+        if repo.returncode:
+            print('ERROR: cannot resolve Git repository for content scan', file=sys.stderr)
+            return 1
+        result = subprocess.run([
+            'docker', 'run', '--rm', '--read-only', '--network=none', '--cap-drop=ALL',
+            '--security-opt=no-new-privileges', '-v', repo.stdout.strip() + ':/repo:ro',
+            'ghcr.io/gitleaks/gitleaks:latest', 'protect', '--source', '/repo',
+            '--staged', '--redact', '--no-banner', '--exit-code', '10',
+        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if result.returncode == 10:
+            print('BLOCKED: gitleaks content scan found findings (values and diagnostics suppressed).', file=sys.stderr)
+            return 1
+        if result.returncode:
+            print('ERROR: gitleaks content scan failed (diagnostics suppressed); check Docker/image availability.', file=sys.stderr)
+            return 1
+        print('OK: redacted gitleaks content scan passed.')
     return 0
 
 

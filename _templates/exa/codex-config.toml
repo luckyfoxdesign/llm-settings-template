@@ -1,0 +1,6 @@
+# Opt-in example: merge into a trusted project's .codex/config.toml.
+# Research defaults to context-dependent auto; Exa: off disables lookups.
+[mcp_servers.exa]
+url = "https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa"
+required = false
+enabled_tools = ["web_search_exa", "web_fetch_exa"]

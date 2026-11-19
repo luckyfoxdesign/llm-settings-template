@@ -6,7 +6,7 @@ figma.showUI(__html__, { width: 420, height: 560 });
 
 var PALETTE_COLLECTION_NAME = "Tailwind Palette";
 var SEMANTIC_COLLECTION_NAME = "Semantic";
-var PALETTE_INDEX_STORAGE_KEY = "luckyfox.paletteValueIndex.v1";
+var PALETTE_INDEX_STORAGE_KEY = "[project-name].paletteValueIndex.v1";
 
 function normalizeHex(value) {
   return String(value).trim().toLowerCase();
@@ -262,7 +262,7 @@ async function exportUsed() {
         figma.currentPage.name +
         "\" на момент выгрузки.",
       $extensions: {
-        "design.luckyfox.tokens": {
+        "design.[project-name].tokens": {
           exportedAt: new Date().toISOString(),
           page: figma.currentPage.name,
           count: variables.length,

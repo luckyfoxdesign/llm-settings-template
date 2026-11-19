@@ -2,6 +2,15 @@
 # Done index
 
 ## workspace
+- 2026-11-19 · [Harden Claude Code Permission Rules And Add A Bash Guard Hook](short/15-11-26-workspace-harden-agent-permissions.md)
+- 2026-11-19 · [Landing Template: Patch Dependencies, Harden Docker, Add CSP](short/15-11-26-workspace-landing-template-deps-and-docker.md)
+- 2026-11-19 · [Widen Leak Detection Before Commit: Filename Corpus And Optional Content Scan](short/15-11-26-workspace-leak-detection-coverage.md)
+- 2026-11-19 · [Reusable Security Checklist And An Executable `check-security.sh`](short/15-11-26-workspace-security-checklist-and-gate.md)
+- 2026-11-19 · [Template Hygiene: Placeholders, Private Paths, Runbook Defaults, Plugin Origin Check](short/15-11-26-workspace-template-hygiene-low.md)
+- 2026-11-16 · [Document Migrating Existing Repos To scripts/verify.sh](short/06-08-26-workspace-document-verify-migration.md)
+- 2026-11-16 · [Remove Quadratic Parsing From The Frontmatter Reader](short/15-11-26-workspace-frontmatter-redos.md)
+- 2026-11-16 · [Gate Commands That Reach The Host From Markdown And Task Branches](short/15-11-26-workspace-gate-markdown-commands.md)
+- 2026-11-16 · [Public Repository Hygiene: Branch Rules, Dependabot, CI Gate, Security Policy](short/15-11-26-workspace-github-repo-hygiene.md)
 - 2026-09-06 · [`_templates/landing/` — Astro + Tailwind sub-repo template with the design-token pipeline](short/05-09-26-workspace-landing-template-tokens.md)
 - 2026-08-26 · [Git Branch Per Task](short/20-08-26-workspace-git-branch-per-task.md)
 - 2026-08-13 · [Give The Workspace Its Own Executable Gate](short/07-08-26-workspace-verify-gate.md)

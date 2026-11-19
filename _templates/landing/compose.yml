@@ -5,15 +5,15 @@ services:
       context: .
       dockerfile: docker-files/Dockerfile.dev
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - .:/app
       - /app/node_modules
 
-  # Production (nginx + static files)
-  astro-prod:
+  # Local static preview; production deploys to Vercel
+  astro-preview:
     build:
       context: .
       dockerfile: docker-files/Dockerfile.prod
     ports:
-      - "8080:3000"
+      - "127.0.0.1:8080:3000"

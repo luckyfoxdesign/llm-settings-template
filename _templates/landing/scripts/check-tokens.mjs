@@ -87,7 +87,7 @@ function readDeclared() {
   const declared = new Map();
   for (const [name, node] of Object.entries(color)) {
     const ext =
-      node && node.$extensions && node.$extensions["design.luckyfox.tokens"];
+      node && Object.values(node.$extensions || {}).find((value) => value?.cssVariable);
     declared.set(name, {
       cssVariable: (ext && ext.cssVariable) || `--color-${name}`,
     });

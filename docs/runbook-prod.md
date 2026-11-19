@@ -31,6 +31,8 @@ Agent rules on the server: start read-only (`ps`, `logs`, `git log`); do not cha
 
 ## Server Security Baseline
 
+Prerequisite: fill this table with the actual configuration and verification results before the first deploy. Resolve missing controls before proceeding.
+
 <!-- Fill in what is actually configured on the VPS so agents and humans can verify it, e.g.:
      - firewall: ufw, only 22/80/443 open
      - ssh: key-only auth, root login disabled
@@ -67,6 +69,8 @@ Then:
 - If the change includes migrations: confirm a fresh backup exists (see Backup / Restore).
 
 ## Deploy
+
+Prerequisite: the server checkout must use a repository-scoped, read-only deploy key for `git pull`; do not use a personal credential or a key with write access.
 
 ```bash
 ssh [your-server-alias] "cd [~/project-path] && bash scripts/deploy.sh"
@@ -106,14 +110,16 @@ After rollback, return HEAD to main: `git checkout main && bash scripts/deploy.s
 
 ssh [your-server-alias]
 cd [~/project-path]
-set -a; . ./.env; set +a
-docker compose -f compose.prod.yml exec -T postgres \
-  pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=custom --no-owner \
+# Compose parses .env as data; never source it as shell code.
+# The postgres service must receive POSTGRES_USER and POSTGRES_DB via its
+# environment/env_file configuration; the inner shell expands them in-container.
+docker compose --env-file .env -f compose.prod.yml exec -T postgres \
+  sh -c 'exec pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=custom --no-owner' \
   > "backups/[project]-$(date -u +%Y%m%dT%H%M%SZ).dump"
 
 Restore:
-docker compose -f compose.prod.yml exec -T postgres \
-  pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists --no-owner \
+docker compose --env-file .env -f compose.prod.yml exec -T postgres \
+  sh -c 'exec pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists --no-owner' \
   < backups/[project]-<timestamp>.dump
 
 Move backups off the VPS with scp/rsync or offsite storage. -->

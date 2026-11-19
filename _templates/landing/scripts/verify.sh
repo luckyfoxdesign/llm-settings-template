@@ -8,16 +8,17 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 # Docker-only, per CLAUDE.md. Required gates must pass; empty optional gates skip.
-BUILD_CMD="docker compose run --rm astro-dev npm run build"        # required
-TOKENS_CMD="docker compose run --rm astro-dev npm run tokens:check" # required
-LINT_CMD=""        # optional — no linter configured
-TEST_CMD=""        # optional — no test suite (static site)
-TYPECHECK_CMD=""   # optional — template rule: no TypeScript in source
+BUILD_CMD=(docker compose run --rm astro-dev npm run build)        # required
+TOKENS_CMD=(docker compose run --rm astro-dev sh -c "npm run tokens:generate && npm run tokens:check") # required for fresh copies
+LINT_CMD=()        # optional — no linter configured
+TEST_CMD=()        # optional — no test suite (static site)
+TYPECHECK_CMD=()   # optional — template rule: no TypeScript in source
 
 run_gate() {
-  local name="$1" cmd="$2" required="$3"
+  local name="$1" required="$2"
+  shift 2
 
-  if [[ -z "$cmd" ]]; then
+  if [[ "$#" -eq 0 ]]; then
     if [[ "$required" == "required" ]]; then
       echo "FAIL: gate '$name' is not configured in scripts/verify.sh" >&2
       exit 1
@@ -27,16 +28,17 @@ run_gate() {
   fi
 
   echo "=== $name ==="
-  if ! eval "$cmd"; then
-    echo "FAIL: gate '$name' failed: $cmd" >&2
+  if ! "$@"; then
+    echo "FAIL: gate '$name' failed: $*" >&2
     exit 1
   fi
 }
 
-run_gate build     "$BUILD_CMD"     required
-run_gate tokens    "$TOKENS_CMD"    required
-run_gate lint      "$LINT_CMD"      optional
-run_gate test      "$TEST_CMD"      optional
-run_gate typecheck "$TYPECHECK_CMD" optional
+# The + expansion preserves empty arrays under Bash 3 with nounset enabled.
+run_gate build required ${BUILD_CMD[@]+"${BUILD_CMD[@]}"}
+run_gate tokens required ${TOKENS_CMD[@]+"${TOKENS_CMD[@]}"}
+run_gate lint optional ${LINT_CMD[@]+"${LINT_CMD[@]}"}
+run_gate test optional ${TEST_CMD[@]+"${TEST_CMD[@]}"}
+run_gate typecheck optional ${TYPECHECK_CMD[@]+"${TYPECHECK_CMD[@]}"}
 
 echo "OK: all configured gates passed"

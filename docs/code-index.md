@@ -2,7 +2,7 @@
 
 # Code → Tasks Index
 
-> **Partial coverage** — only 1/6 tasks (17%) have a `related_code` field.
+> **Partial coverage** — only 1/14 tasks (7%) have a `related_code` field.
 > Fill `related_code` in task frontmatter so this index is complete.
 
 ### app/src/...

@@ -5,6 +5,7 @@
 
 # Локальная активная работа
 docs/wip/
+.exa-preferences
 
 # macOS / IDE
 .DS_Store

@@ -11,9 +11,14 @@ def private_path(path):
         name = part.lower()
         if name == '.env.example' and index == len(parts) - 1:
             continue
-        if (name.startswith('.env') or name.endswith(('.pem', '.key'))
-                or name.startswith(('id_rsa', 'id_ed25519'))
+        if (name.startswith('.env') or name.endswith(('.pem', '.key', '.p12', '.pfx', '.jks', '.keystore',
+                                  '.ovpn', '.kdbx', '.asc', '.gpg', '.tfstate'))
+                or name.startswith('id_')
                 or name in {'.ssh', '.aws', '.kube', '.gnupg', '.npmrc', '.netrc', 'auth.json'}
+                or name in {'kubeconfig', '.pgpass', '.htpasswd', '.pypirc', '.boto', '.s3cfg', 'wp-config.php'}
+                or (name.startswith('service-account') and name.endswith('.json'))
+                or (name == 'config.json' and index > 0 and parts[index - 1].lower() == '.docker')
+                or name.endswith('-token') or '_token' in name
                 or 'secret' in name or 'credential' in name
                 or re.search(r'(?:^|[._-])(?:oauth|auth|access|refresh|api|session|bearer)[._-]?tokens?(?:[._-]|$)', name)
                 or name in {'token', 'token.txt', 'token.json', 'tokens.json', 'token.md'}):
@@ -35,6 +40,39 @@ def markdown_files(directory):
                 yield path
 
 
+def split_inline_list(inside):
+    pieces = []
+    start = 0
+    quote = None
+    at_start = True
+    index = 0
+    while index < len(inside):
+        char = inside[index]
+        if quote:
+            if quote == '"' and char == '\\':
+                index += 2
+                continue
+            if char == quote:
+                if quote == "'" and index + 1 < len(inside) and inside[index + 1] == "'":
+                    index += 2
+                    continue
+                quote = None
+        elif at_start and char in ('"', "'"):
+            quote = char
+            at_start = False
+        elif char == ',':
+            pieces.append(inside[start:index])
+            start = index + 1
+            at_start = True
+        elif not char.isspace():
+            at_start = False
+        index += 1
+    if quote:
+        raise ValueError('invalid quoted scalar')
+    pieces.append(inside[start:])
+    return pieces
+
+
 def scalar(value):
     value = value.strip()
     if not value:
@@ -45,7 +83,7 @@ def scalar(value):
         inside = value[1:-1].strip()
         if not inside:
             return []
-        pieces = re.split(r',(?=(?:[^\"\']|\"[^\"]*\"|\'[^\']*\')*$)', inside)
+        pieces = split_inline_list(inside)
         result = [scalar(piece) for piece in pieces]
         if any(not isinstance(x, str) or not x for x in result):
             raise ValueError('inline lists must contain nonempty scalars')
@@ -75,6 +113,8 @@ def extract_frontmatter(text):
         raise ValueError('unclosed frontmatter') from None
     rows = []
     for line in lines[1:end]:
+        if len(line) > 1024:
+            raise ValueError('frontmatter line too long')
         if not line.strip() or line.lstrip().startswith('#'):
             continue
         if '\t' in line:

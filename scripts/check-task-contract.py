@@ -2,6 +2,7 @@
 """Check active task contracts; --complete validates a filled done record."""
 import argparse
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -15,9 +16,65 @@ def is_template_example(text):
     return any('TEMPLATE-EXAMPLE' in comment for comment in re.findall(r'<!--.*?-->', text, re.S))
 
 
+def verification_command_allowed(line):
+    # Restrict raw shell syntax before tokenizing; quoted metacharacters are
+    # rejected too, so validation never depends on how a shell evaluates them.
+    if not re.fullmatch(r"[A-Za-z0-9_./:=,@%+\- '\"]+", line):
+        return False
+    if re.search(r'(?<![\w-])(curl|wget|ssh|sudo|rm|eval)(?![\w-])', line):
+        return False
+    try:
+        args = shlex.split(line)
+    except ValueError:
+        return False
+    if not args or any(re.search(r'(?<![\w-])(curl|wget|ssh|sudo|rm|eval)(?![\w-])', arg) for arg in args):
+        return False
+    # Reject traversal and private paths, including argument paths.
+    if any(private_path(arg) or '..' in Path(arg).parts for arg in args):
+        return False
+    if args[0] == 'bash':
+        return len(args) >= 2 and bool(re.fullmatch(
+            r'(?:scripts/[A-Za-z0-9_-]+\.sh|(?:app|landing|nginx)/scripts/verify\.sh)', args[1]))
+    if args[0] == 'python3':
+        tail = args[1:]
+        if tail and tail[0] == '-B':
+            tail = tail[1:]
+        return bool(tail and re.fullmatch(r'scripts/[A-Za-z0-9_-]+\.py', tail[0]))
+    if args[:2] == ['docker', 'compose']:
+        tail = args[2:]
+        if tail[:1] == ['-f']:
+            if len(tail) < 2 or not tail[1] or tail[1].startswith(('/', '-')):
+                return False
+            tail = tail[2:]
+        return (len(tail) >= 3 and tail[:2] == ['run', '--rm']
+                and bool(re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]*', tail[2])))
+    return False
+
+
+def verification_errors(body):
+    errors = []
+    fenced = False
+    for raw in body.splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        if not fenced and line in {'```bash', '```sh', '```'}:
+            fenced = True
+        elif fenced and line == '```':
+            fenced = False
+        elif not fenced or not verification_command_allowed(line):
+            errors.append('Verification command not allowed: ' + line)
+    if fenced:
+        errors.append('Verification has an unclosed command fence')
+    return errors
+
+
 def contract_errors(text, complete=False):
     try:
         content = sections(text)
+        # Preserve HTML comments in executable text: the shared sections helper
+        # strips them, which could otherwise hide shell syntax from validation.
+        raw_content = sections(text.replace('<!--', '\x00'))
         fm = extract_frontmatter(text) or {}
     except ValueError as error:
         return [str(error)]
@@ -40,7 +97,8 @@ def contract_errors(text, complete=False):
     if not isinstance(projects, list):
         errors.append('projects must be a list')
         projects = []
-    verification = content.get('verification', '')
+    verification = raw_content.get('verification', '').replace('\x00', '<!--')
+    errors.extend(verification_errors(verification))
     for repo in projects:
         if not isinstance(repo, str) or repo not in {'app', 'landing', 'nginx', 'workspace'}:
             errors.append('invalid task project')

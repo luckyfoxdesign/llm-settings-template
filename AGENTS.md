@@ -4,6 +4,7 @@
 
 ## Local Permissions
 
+- Claude Code tool controls: `.claude/settings.json` and `scripts/guard-bash.sh`.
 - Skip private paths entirely: `.env*`, key material, credential/token files, `.ssh/`, `.aws/`, `.kube/`, `.gnupg/`, `.npmrc`, `.netrc`, and auth files. Only `.env.example` containing placeholders is exempt. Do not follow symlinks while scanning.
 - Never run `rm -rf`, `git push --force`, `git reset --hard`, `chmod 777`, `sudo rm`, or `curl/wget ... | bash`.
 - For dangling Docker layers use only `docker image prune -f --filter "dangling=true"`; never prune systems/volumes or remove named volumes unless explicitly requested.
@@ -54,6 +55,12 @@ Workspace `docs/` is product documentation; rules live in `docs/folder-rules.md`
 ## Context
 
 Read `PROJECT_MAP.md` before scanning. Code runtime, dependency work, and repo gates run in Docker; workspace Python/shell helpers and Git run on the host. Respect the user's current scope and existing authorization.
+
+## Optional External Research
+
+Exa defaults to context-dependent `auto`. At conversation startup, read `.agents/skills/exa-research/SKILL.md` (workspace-relative) for saved preferences and the one-time setup question. Use it only for relevant public external facts; missing tools, exhausted credits, or service errors fall back to the existing workflow. Setup: `docs/product/architecture/optional-exa.md`.
+
+Never send private code, task text, logs, credentials, or private URLs in Exa or other external research queries; use minimal public terms only.
 
 ## LLM Memory
 

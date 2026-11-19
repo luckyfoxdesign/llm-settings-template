@@ -1,32 +1,25 @@
-# Stage 1: Build stage
-FROM node:20-bookworm-slim AS build
+# Build static output for the local preview image.
+FROM node:26-bookworm-slim AS build
 
+ENV ASTRO_TELEMETRY_DISABLED=1
 WORKDIR /app
 
-# Copy package files for dependency install
 COPY package*.json ./
-
-RUN npm ci
-
-COPY . .
-
-# Build the static site
+RUN npm ci --ignore-scripts && chown -R node:node /app
+COPY --chown=node:node . .
+USER 1000:1000
 RUN npm run build
 
-# Stage 2: Runtime (static site preview)
-FROM node:20-bookworm-slim
+# Local preview only. Production deploys static output to Vercel.
+FROM node:26-bookworm-slim
 
+ENV ASTRO_TELEMETRY_DISABLED=1
 WORKDIR /app
 
-# Copy only necessary files
-COPY --from=build /app/dist ./dist
+COPY --from=build --chown=node:node /app/dist ./dist
 COPY --from=build /app/package*.json ./
+RUN npm ci --omit=dev --ignore-scripts && chown -R node:node /app
 
-# Install production dependencies (though, для статического сайта они могут быть минимальны)
-RUN npm ci --omit=dev
-
-# Expose port
 EXPOSE 3000
-
-# Serve the static build via astro preview
+USER 1000:1000
 CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "3000"]

@@ -121,6 +121,20 @@ Every task file in `docs/backlog/todo/` and `docs/wip/` carries these sections. 
 
 For `project: app|landing|nginx`, `Verification` includes `bash <repo>/scripts/verify.sh`. For `project: workspace`, it includes `bash scripts/verify.sh`. Add narrower acceptance commands when the standard gate does not prove the requested behavior.
 
+`Verification` contains fenced `bash`/`sh` command blocks, one command per line.
+The allowlist is `bash scripts/<name>.sh [args]`,
+`bash <repo>/scripts/verify.sh [args]` (`app|landing|nginx`),
+`python3 [-B] scripts/<name>.py [args]`, and
+`docker compose [-f <relative-file>] run --rm <service> [args]`.
+Script names use letters, digits, underscores, and hyphens. Paths must not
+traverse `..` or name private files. Arguments may be quoted, but shell operators
+(`|`, `;`, `&&`, `||`), substitutions (`$(`, backticks, variables), redirects,
+globs, and other shell syntax are rejected even inside quotes. The words `curl`,
+`wget`, `ssh`, `sudo`, `rm`, and `eval` are rejected (`--rm` is allowed).
+Commands outside this list belong in separate acceptance checks requiring
+explicit user authorization, not automatic execution from Markdown.
+Strict and completion validation both enforce the allowlist.
+
 Check:
 
 ```bash
@@ -130,6 +144,8 @@ python3 scripts/check-task-contract.py
 Warning-only by default; `--strict` fails on missing or empty sections, incomplete budgets, missing repo gates, or missing acceptance checkboxes. Only the named `00-00-00-app-example-task.md` scaffold carrying `TEMPLATE-EXAMPLE` inside an HTML comment is skipped.
 
 The staged-path guard accepts `--task <task-file>` to enforce approved paths and the numeric file limit. For code repos, add `--base main` to include already committed task changes. File budgets count changed task files; for cross tasks, check the aggregate across repos before closure. Completion documentation is staged separately with explicit `--allow <path>` arguments. Dependency and abstraction limits still require inspection; structural validators do not prove their semantics.
+
+For an optional content check, run `bash scripts/check-staged-paths.sh . --secrets-only --content-scan`, or add `--content-scan` to a task-scoped invocation. The wrapper runs `ghcr.io/gitleaks/gitleaks:latest protect --staged --redact` against the Git repository mounted read-only in Docker with container networking disabled. The first image pull needs network access. Findings and scanner errors fail the check; diagnostics are suppressed to prevent values from reaching the terminal. Missing Docker or an inaccessible daemon prints `SKIP` and exits 0: this is not evidence of a completed scan. Without the flag, only filenames are checked and Docker is not used. Python never reads staged contents. This opt-in scan is not part of `scripts/verify.sh`.
 
 ### Severity Routing
 
@@ -195,6 +211,8 @@ Remove `Closes #N` when there is no GitHub issue.
 ## Frontmatter
 
 Supported YAML subset: plain/quoted scalars, block and inline scalar lists, and nested mappings. Anchors, tags, flow mappings, and multiline scalars are rejected. `projects` must be a list of unique valid projects, not a string.
+
+Each frontmatter line is limited to 1 024 characters, including indentation, comments, and blank lines. Longer lines are rejected with `frontmatter line too long`; Markdown body lines are not limited.
 
 All new docs files, except technical references like `folder-rules.md`, should start with YAML frontmatter.
 

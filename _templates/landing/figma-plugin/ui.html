@@ -122,6 +122,7 @@
       }
 
       window.onmessage = function (event) {
+        if (event.origin !== "https://www.figma.com" && event.origin !== "null") return;
         var msg = event.data.pluginMessage;
         if (!msg) return;
 

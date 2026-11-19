@@ -24,7 +24,7 @@ export default defineConfig({
 
   // Dev server options.
   server: {
-    host: true, // allow external connections (important for Docker)
+    host: true, // Docker access; safe only with Compose ports bound to localhost
     port: 3000,
   },
 
