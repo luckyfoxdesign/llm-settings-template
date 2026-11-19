@@ -23,7 +23,7 @@ Added `_templates/landing/` — 27 files, a second sub-repo template alongside t
 generic `_templates/sub-repo/`, which is untouched and stays the default for
 non-landing repos.
 
-- **Ported verbatim** from `dev/luckyfox-workspace/landing/`:
+- **Ported verbatim** from the source workspace:
   `scripts/check-tokens.mjs`, `scripts/fixtures/tokens-drift.json`, the three
   `figma-plugin/` files, `tsconfig.json`, `compose.yml`, both
   `docker-files/Dockerfile.*`.
@@ -57,7 +57,7 @@ non-landing repos.
   `tokens:check — ok`; `astro build` produced 1 page in `dist/`.
 - `node --check` passed on both `.mjs` files and `figma-plugin/code.js` (run in
   `node:20-bookworm-slim`; there is no host Node). `manifest.json` is valid JSON
-  with `id: luckyfox-design-tokens` and `networkAccess.allowedDomains: ["none"]`.
+  with `id: [project-name]-design-tokens` and `networkAccess.allowedDomains: ["none"]`.
 - `dist/figma-plugin` absent; `tokens:lint` exit 0 with no export present;
   fixtures exit 0 (clean) and 1 (drift).
 - `git diff --exit-code -- _templates/sub-repo` clean; `git status --porcelain`

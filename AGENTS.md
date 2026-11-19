@@ -60,6 +60,8 @@ Read `PROJECT_MAP.md` before scanning. Code runtime, dependency work, and repo g
 
 Exa defaults to context-dependent `auto`. At conversation startup, read `.agents/skills/exa-research/SKILL.md` (workspace-relative) for saved preferences and the one-time setup question. Use it only for relevant public external facts; missing tools, exhausted credits, or service errors fall back to the existing workflow. Setup: `docs/product/architecture/optional-exa.md`.
 
+Never send private code, task text, logs, credentials, or private URLs in Exa or other external research queries; use minimal public terms only.
+
 ## LLM Memory
 
 Auto-memory is keyed to `dev/[project-name]/`. Tag new facts with `app`, `landing`, `nginx`, or `workspace` unless workspace-wide.

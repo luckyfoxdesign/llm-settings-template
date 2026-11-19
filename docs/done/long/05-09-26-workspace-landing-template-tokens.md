@@ -39,15 +39,13 @@ wiring (3), `scripts/new-landing.sh` spin-up script (4), Figma MCP read path in
 the template's `AGENTS.md` (5).
 
 The pipeline being ported already exists and was verified in another workspace:
-`dev/luckyfox-workspace/landing/` — `scripts/generate-tokens.mjs` (reads the
+the source workspace — `scripts/generate-tokens.mjs` (reads the
 installed `tailwindcss`, oklch→sRGB, writes DTCG; `--check` asserts control
 values), `scripts/check-tokens.mjs` (`tokens:lint`, read-only drift linter with
 `scripts/fixtures/*.json`), `figma-plugin/` (`manifest.json`, `code.js`,
 `ui.html`; dev-mode, closed `networkAccess`, fixed `id`), and the `@theme`
-block in `src/styles/global.css`. Its four completion records are
-`dev/luckyfox-workspace/docs/done/short/04-09-26-landing-design-tokens-{a,a2,b,c}-*.md`
-and the round-trip runbook is
-`dev/luckyfox-workspace/docs/runbook-design-tokens.md`.
+block in `src/styles/global.css`. Its four completion records and
+the round-trip runbook are in the source workspace.
 
 Assumptions recorded here rather than asked:
 
@@ -81,12 +79,12 @@ Assumptions recorded here rather than asked:
   tasks 3 and 4.
 - Do not finalize the canonical `@theme` slot-name set or write the token
   conventions doc — task 2.
-- Do not port `luckyfox.design`-specific content: no i18n, content collections,
+- Do not port `[project-domain]`-specific content: no i18n, content collections,
   middleware, SEO/analytics/password-gate/Tableau components, portfolio or
   project pages, `TZ_service_SEO.md`, `SECURITY.md`.
 - Do not add a linter, formatter, or test framework to the template
   (`tokens:lint` is the ported drift linter, not a new tool).
-- Do not change anything under `dev/luckyfox-workspace/` (the source).
+- Do not change anything in the source workspace.
 - Do not change the Figma plugin beyond copying its three files verbatim: no
   `manifest.json` `id` change, no `networkAccess` opening, no publish config.
 - Do not introduce TypeScript in template source beyond the one minimal
@@ -172,7 +170,7 @@ grep -nE 'SECURITY\.md|TZ_service_SEO\.md|/drafts|\.svelte-kit' _templates/landi
 ## Implementation Steps
 
 1. Create `_templates/landing/` and copy the Astro shell from
-   `dev/luckyfox-workspace/landing/`: `package.json` (static `name`, keep exact
+   the source workspace: `package.json` (static `name`, keep exact
    dep pins), `package-lock.json`, `tsconfig.json`, `compose.yml`,
    `docker-files/Dockerfile.dev`, `docker-files/Dockerfile.prod`,
    `.dockerignore`, `.gitignore`, `.vercelignore`. Do not copy `.npmrc`; the
@@ -242,9 +240,8 @@ grep -nE 'SECURITY\.md|TZ_service_SEO\.md|/drafts|\.svelte-kit' _templates/landi
 - Sequence: task 1 of 5. Next — `@theme` slot contract + conventions doc (2),
   runbook + README/PROJECT_MAP wiring (3), `scripts/new-landing.sh` (4), Figma
   MCP read path in template `AGENTS.md` (5).
-- Source pipeline: `dev/luckyfox-workspace/landing/` and its four records
-  `dev/luckyfox-workspace/docs/done/short/04-09-26-landing-design-tokens-{a,a2,b,c}-*.md`.
-- Source runbook: `dev/luckyfox-workspace/docs/runbook-design-tokens.md`.
+- Source pipeline and its four records: the source workspace.
+- Source runbook: the source workspace.
 - Template convention: `_templates/sub-repo/`, `docs/folder-rules.md` → Project
   Maps.
 - Contract shape: `docs/product/architecture/verification-contract.md`.
@@ -271,7 +268,7 @@ docker run --rm -v "$PWD/_templates/landing:/w:ro" -w /w node:20-bookworm-slim
   node --check scripts/check-tokens.mjs      → OK
   node --check figma-plugin/code.js          → OK
 python3 -c "json.load(open('.../figma-plugin/manifest.json'))"
-  → OK: valid JSON; id='luckyfox-design-tokens';
+  → OK: valid JSON; id='[project-name]-design-tokens';
     networkAccess={'allowedDomains': ['none']}
 ```
 
@@ -360,7 +357,7 @@ The frozen sections were not touched. These are choices inside the non-frozen
 3. `vercel.json` dropped `installCommand: npm install`, and `.vercelignore` no
    longer excludes `package-lock.json`, so Vercel installs from the lock.
    The source did the opposite; reproducible installs matter more in a template.
-4. The DTCG extension namespace `design.luckyfox.tokens` was kept verbatim in
+4. The DTCG extension namespace `design.[project-name].tokens` was kept verbatim in
    both scripts. It cannot be renamed here: the frozen non-goal forbids editing
    the Figma plugin, and `figma-plugin/code.js` writes exactly that key, so
    renaming it only in the scripts would break the round trip. A consistent

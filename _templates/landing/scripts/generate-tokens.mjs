@@ -27,7 +27,7 @@ const TAILWIND_PKG = join(ROOT, "node_modules/tailwindcss/package.json");
 const NOT_A_COLOR = ["inherit", "current", "transparent"];
 
 // Пространство имён для нестандартных полей DTCG.
-const EXT = "design.luckyfox.tokens";
+const EXT = "design.[project-name].tokens";
 
 // Контрольные значения. Расхождение означает, что поехал конвертер или палитра,
 // и это должно останавливать сборку, а не тихо переписывать файлы.

@@ -1,6 +1,6 @@
 {
-  "name": "luckyfox design tokens",
-  "id": "luckyfox-design-tokens",
+  "name": "[project-name] design tokens",
+  "id": "[project-name]-design-tokens",
   "api": "1.0.0",
   "main": "code.js",
   "ui": "ui.html",

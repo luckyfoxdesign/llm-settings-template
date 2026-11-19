@@ -129,6 +129,7 @@ Full policy: workspace `../AGENTS.md` → Security. Repo-local baseline:
 - Never print or log secret values (`echo $SECRET`, `env`, `docker compose config` without `--quiet`).
 - Escape or validate any external data rendered into HTML; never interpolate it into inline scripts.
 - Keep every response header in `vercel.json`, including the strict Content-Security-Policy; avoid inline scripts/styles and external resources that it blocks.
+- HSTS in `vercel.json` includes `includeSubDomains; preload`: confirm HTTPS with valid certificates for every subdomain before requesting preload inclusion. The header alone does not submit the domain; removal from browser preload lists can take months ([preload guidance](https://hstspreload.org/contact/)).
 - Keep the Figma plugin's `networkAccess` closed; opening it needs an explicit task.
 - Containers: run as non-root, disable Astro telemetry, no `privileged: true`, no host network, publish only required ports bound to `127.0.0.1`.
 - `host: true` is needed inside Docker; dev and preview servers must remain localhost-only on the host. Never expose them to the LAN.
