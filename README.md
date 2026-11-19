@@ -216,18 +216,20 @@ Setup and generated indexes:
 
 ## Safety Defaults
 
-Claude Code settings use filesystem-root `Read(//**/...)` deny rules as well as
-workspace-relative rules to protect private paths outside the project, including
-`/tmp` and its macOS alias `/private/tmp`. `.env.example` stays exempt.
-Read denies also cover built-in searches such as Grep on a best-effort basis;
-verify the actual tools in your Claude Code session.
-Settings deny destructive command patterns and run `scripts/guard-bash.sh`
-before Bash calls. The guard checks command text for private paths and destructive
-variants without executing the command or opening its target files; SSH and opaque
-shell evaluation require confirmation, including Python commands whose paths are
-assembled dynamically. It does not grant permission to safe commands.
+Claude Code runs `scripts/guard-bash.sh` before Bash and built-in file tools.
+The guard blocks private paths by name, checks resolved file paths without opening
+them, and preserves the `.env.example` exception. Directory searches via Grep/Glob
+inside the current workspace require confirmation; external directory searches,
+explicit private paths and private search globs are blocked.
+SSH and dynamic/interpreted Bash commands also require confirmation.
+Settings keep filesystem-root denies for private paths and relative `.env*` denies
+with an ordered `.env.example` exception. Claude Code 2.1.285 overmatches negated
+character classes and `.env.example/**`; its absolute denies cannot be carved out
+with `!`. The hook enforces the `.env*` distinction outside the working directory.
+It never emits an allow decision; normal permissions still apply to safe files,
+including permission prompts for files outside the working directories.
 The sub-repo template calls the shared guard in `../scripts/`; keep repos inside the
-workspace. A missing guard blocks Bash. These text checks are defense in depth,
+workspace. A missing guard blocks matched tool calls. These text checks are defense in depth,
 not an OS sandbox: generated paths and commands still need human review.
 After changing settings, verify in a normal-permission Claude Code session that
 Read, Grep, `cat`, and `python3` cannot access a disposable non-secret

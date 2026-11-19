@@ -210,18 +210,29 @@ class Documents(unittest.TestCase):
         for settings in ['.claude/settings.json', '_templates/sub-repo/.claude/settings.json']:
             data = json.loads((ROOT / settings).read_text())['permissions']
             self.assertNotIn('Bash(docker*)', data['allow'])
-            patterns = [rule[len('Read(**/'):-1] for rule in data['deny'] if rule.startswith('Read(**/.env')]
-            self.assertFalse(any(fnmatch.fnmatchcase('.env.example', pattern) for pattern in patterns))
-            for name in ['.env', '.env.', '.env.e', '.env.exam', '.env.production', '.env.test', '.env.example.bak', '.environment']:
-                self.assertTrue(any(fnmatch.fnmatchcase(name, pattern) for pattern in patterns), name)
+            patterns = [rule[len('Read('):-1] for rule in data['deny']
+                        if rule.startswith(('Read(**/.env', 'Read(!**/.env'))]
+            # Live 2.1.285 overmatches negative classes and / ** on the placeholder.
+            self.assertEqual(patterns, ['**/.env*', '!**/.env.example', '**/.env.example/?*'])
+            blocked = ['.env', '.env.', '.env.e', '.env.exam', '.env.production',
+                       '.env.test', '.env.example.bak', '.environment', '.env.example/child']
+            with tempfile.TemporaryDirectory(prefix='relative-read-rule-') as tmp:
+                root = Path(tmp)
+                run(['git', 'init', '-q'], root, check=True)
+                (root / '.gitignore').write_text('\n'.join(patterns) + '\n')
+                result = subprocess.run(
+                    ['git', '-c', 'core.excludesFile=/dev/null', 'check-ignore',
+                     '--no-index', '--stdin', '-z'], cwd=root,
+                    input='\0'.join(blocked + ['.env.example', 'nested/.env.example']) + '\0',
+                    text=True, capture_output=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(set(result.stdout.rstrip('\0').split('\0')), set(blocked))
 
     def test_absolute_read_rules_with_gitignore_matching(self):
         # Claude uses gitignore path syntax. Git checks names only here;
         # no private-named fixture files are created, opened or searched.
         blocked = [
-            "/.env", "/tmp/canary/.env.canary", "/private/tmp/canary/.env.canary",
-            "/outside/.environment", "/outside/.env.", "/outside/.env.e",
-            "/outside/.env.example.bak", "/outside/.env.example/child",
+            "/.env", "/tmp/canary/.env",
             "/outside/.ssh/config", "/outside/.aws/config", "/outside/.kube/config",
             "/outside/.gnupg/file", "/outside/.npmrc", "/outside/.netrc",
             "/outside/auth.json", "/outside/credentials.json", "/outside/secret.txt",
@@ -235,8 +246,12 @@ class Documents(unittest.TestCase):
             local_rules = [rule for rule in data["deny"] if rule.startswith("Read(**/")]
             absolute_rules = [rule for rule in data["deny"] if rule.startswith("Read(//")]
             self.assertTrue(absolute_rules, settings + ": no filesystem-root Read denies")
-            self.assertEqual(set(absolute_rules), {rule.replace("Read(**/", "Read(//**/", 1)
-                                                 for rule in local_rules})
+            # Other private names retain global native denies. The hook handles
+            # global .env variants because absolute glob negation cannot exempt
+            # the placeholder in the tested Claude Code runtime.
+            other_rules = [rule for rule in local_rules if not rule.startswith("Read(**/.env")]
+            self.assertEqual(set(absolute_rules), {"Read(//**/.env)"} | {
+                rule.replace("Read(**/", "Read(//**/", 1) for rule in other_rules})
             self.assertEqual(data["allow"], ["Read(**/.env.example)", "Edit(**/.env.example)"])
             with tempfile.TemporaryDirectory(prefix="read-rule-test-") as tmp:
                 root = Path(tmp)
@@ -330,8 +345,9 @@ class BashGuard(unittest.TestCase):
         for command in ["ssh server ps", "env ssh server uptime", "bash -c ls",
                         "python3 -c pass",
                         "python3 -c \"from pathlib import Path; Path('/tmp/canary') .joinpath('.' + 'en' + 'v.canary').read_text()\"",
-                        "cat $INPUT", "eval ls", "cat `pwd`/file",
-                        "cat *", "cat .[e]nv", "rg pattern .", "grep -r pattern .", "env"]:
+                        "python3.11 -c pass", "cat $INPUT", "eval ls", "cat `pwd`/file",
+                        "cat *", "cat .[e]nv", "rg pattern .", "grep -r pattern .", "env",
+                        "cd /tmp && cat alias.txt"]:
             with self.subTest(command=command):
                 result = self.guard(command)
                 self.assertEqual(result.returncode, 0, result.stderr)
@@ -346,6 +362,45 @@ class BashGuard(unittest.TestCase):
                 self.assertEqual(len(result.stderr.splitlines()), 1)
         self.assertEqual(self.guard("cat \"unterminated").returncode, 2)
 
+    def test_file_tools_private_paths_placeholders_and_searches(self):
+        with tempfile.TemporaryDirectory(prefix="file-guard-test-") as tmp:
+            root = Path(tmp)
+            (root / ".env.example").write_text("# Placeholder only\n")
+            (root / "guide.txt").write_text("Safe fixture\n")
+            # Metadata-only resolution must catch a harmless dangling alias
+            # without opening or creating a private-named file.
+            (root / "alias.txt").symlink_to(root / ".env.canary")
+            self.assertEqual(self.guard("cat " + str(root / "alias.txt")).returncode, 2)
+            (root / "alias with spaces 😀.txt").symlink_to(root / ".env.canary")
+            self.assertEqual(self.guard('cat "' + str(root / "alias with spaces 😀.txt") + '"').returncode, 2)
+            for tool, key in [("Read", "file_path"), ("Edit", "file_path"),
+                              ("Write", "file_path"), ("NotebookEdit", "notebook_path"),
+                              ("Grep", "path"), ("Glob", "path")]:
+                for path in [".env.canary", ".environment", ".env.example.bak",
+                             ".env.example/child", "alias.txt", "../.env.local"]:
+                    event = {"tool_name": tool, "cwd": str(root), "tool_input": {key: path}}
+                    with self.subTest(tool=tool, path=path):
+                        result = self.guard(raw=json.dumps(event))
+                        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                        self.assertIn("private path reference", result.stderr)
+                if tool != "Glob":
+                    for path in [".env.example", "guide.txt"]:
+                        event = {"tool_name": tool, "cwd": str(root), "tool_input": {key: path}}
+                        with self.subTest(tool=tool, path=path):
+                            result = self.guard(raw=json.dumps(event))
+                            self.assertEqual((result.returncode, result.stdout, result.stderr),
+                                             (0, "", ""))
+            for tool in ["Grep", "Glob"]:
+                event = {"tool_name": tool, "cwd": str(root), "tool_input": {"path": "."}}
+                result = self.guard(raw=json.dumps(event))
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(json.loads(result.stdout)["hookSpecificOutput"]["permissionDecision"], "ask")
+                event["tool_input"]["path"] = str(root.parent)
+                self.assertEqual(self.guard(raw=json.dumps(event)).returncode, 2)
+                event["tool_input"]["path"] = "."
+                event["tool_input"]["glob" if tool == "Grep" else "pattern"] = "**/.env*"
+                self.assertEqual(self.guard(raw=json.dumps(event)).returncode, 2)
+
     def test_settings_hook_resolves_in_workspace_and_sub_repo(self):
         with tempfile.TemporaryDirectory(prefix="guard workspace ") as tmp:
             workspace = Path(tmp)
@@ -358,7 +413,8 @@ class BashGuard(unittest.TestCase):
                                   ("_templates/sub-repo/.claude/settings.json", repo)]:
                 config = json.loads((ROOT / path).read_text())
                 hook = config["hooks"]["PreToolUse"][0]
-                self.assertEqual(hook["matcher"], "Bash")
+                self.assertEqual(set(hook["matcher"].split("|")),
+                                 {"Bash", "Read", "Grep", "Glob", "Edit", "Write", "NotebookEdit"})
                 command = hook["hooks"][0]["command"]
                 # Replace only the documented project-dir variable with a quoted shell path.
                 command = command.replace("${CLAUDE_PROJECT_DIR}", str(project))
